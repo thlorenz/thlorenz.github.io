@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <title>thlorenz.com blog</title>
+  <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+  <nav class="sidebar">
+    <ul>
+      <li>
+        <h3>Thorsten Lorenz</h3>
+      </li>
+      <li>
+        <img alt="avatar" src="https://avatars3.githubusercontent.com/u/192891?v=3&s=460">
+      </li>
+      <li><a href="/">home</a></li>
+      <li><a href="/about">about</a></li>
+    </ul>
+  </nav>
+  <article class="blog-post">
+    <time class="entry-date">Wed Dec 18 2013 22:00:52</time>
+    <h1>The nodejs local module path trick</h1>
+    <p>Sometimes you have a module installed locally that happens to have the same name as a core module. 
+As an example you may have a module called <code>util</code>.</p>
+<p>Now if you <code>var util = require(&#39;util&#39;)</code> you actually get the node core <code>util</code> module, not what you wanted right?</p>
+<p>So then you may think <code>var util = require(&#39;./node_modules/util&#39;)</code> maybe the end all be all.</p>
+<p><strong>Not so fast scotty!</strong> Cuz if someone installs your library as a dependency and runs <a href="https://npmjs.org/doc/cli/npm-dedupe.html"><code>npm dedupe</code></a>
+then your <code>util</code> module may get moved up one or more directories, well and then it&#39;s not where you are trying to
+find it anymore.</p>
+<p>There is however a nice little <em>trick</em> <a href="https://github.com/defunctzombie/commonjs-assert/blob/f8971d04cfc6a54e2a72ae45f3dd00f62fd9282d/assert.js#L25-L28">I found today in one of @defunctzombie&#39;s
+modules</a></p>
+<p>Asking for the <code>util</code> module via <code>var util = require(&#39;util/&#39;)</code> (trailing slash is important) will make nodejs load it
+from your local <code>node_modules</code>, but also find it if it was moved due to <code>npm dedupe</code>.</p>
+<p>And that&#39;s all there is too it.</p>
+
+  </article>
+</body>
+</html>
+
+<!--
+vim: ft=handlebars
+-->

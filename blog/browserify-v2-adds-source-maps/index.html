@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <title>thlorenz.com blog</title>
+  <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+  <nav class="sidebar">
+    <ul>
+      <li>
+        <h3>Thorsten Lorenz</h3>
+      </li>
+      <li>
+        <img alt="avatar" src="https://avatars3.githubusercontent.com/u/192891?v=3&s=460">
+      </li>
+      <li><a href="/">home</a></li>
+      <li><a href="/about">about</a></li>
+    </ul>
+  </nav>
+  <article class="blog-post">
+    <time class="entry-date">Sunday March 31st 2013 21:49:41</time>
+    <h1>browserify v2 adds source maps</h1>
+    <p>I recently helped to add source map support to <a href="https://github.com/substack/node-browserify">browserify</a> version 2 and will
+outline in this post, what source maps are, how to use them with browserify and how the support was added.</p>
+<h2 id="what-is-browserify">What is browserify</h2>
+<p>In order for what follows to make sense, you should have a basic understanding of what browserify is and what it does. </p>
+<p>In one sentence it will bundle your modules that are written using CommonJS style <code>require</code>s into one file that can
+execute in the browser. Read more <a href="https://github.com/substack/node-browserify/blob/master/readme.markdown">here</a>.</p>
+<h2 id="how-do-i-get-source-maps-to-work-with-browserify-tell-me-quick-">How do I get source maps to work with browserify, tell me quick!</h2>
+<p>This section is for the impatient and will just outline what you have to do in order to get source maps into
+your browserified bundle.</p>
+<h3 id="from-the-command-line">From the command line</h3>
+<p>Build your bundle as before, except include the <code>--debug</code> flag, i.e.:</p>
+<p><code>browserify --entry main.js --outfile bundle.js --debug</code></p>
+<h3 id="inside-your-build-script">Inside your build script</h3>
+<p>Build your bundle as before, except pass <code>{ debug: true }</code> to the bundle function i.e.:</p>
+<pre><code class="hljs js">browserify()
+  .require(<span class="hljs-built_in">require</span>.resolve(<span class="hljs-string">'./main.js'</span>), { entry: <span class="hljs-literal">true</span> })
+  .bundle({ debug: <span class="hljs-literal">true</span> })
+  .pipe(fs.createWriteStream(<span class="hljs-string">'./bundle.js'</span>));</code></pre>
+
+<h3 id="enabling-source-maps-in-the-browser">Enabling source maps in the browser</h3>
+<p>In chrome do the following to get source map support:</p>
+<ol>
+<li>open dev tools <code>Cmd-Alt-J</code></li>
+<li>Click on the cog icon in the bottom right corner</li>
+<li>Select the &#39;General` tab and check &#39;Enable source maps&#39;</li>
+</ol>
+<p>Now you can refresh your browser and should see modules that were included in the bundle as separate entries in the
+&#39;Sources&#39; tab. You can directly debug these files and they also show up in your stacktraces and log statements.</p>
+<h2 id="itching-to-try-it-right-now-">Itching to try it right now?</h2>
+<p><a href="http://thlorenz.github.com/WebGLCraft/">Here is a live example</a> of debugging coffee script in the browser:</p>
+<p><img src="https://raw.github.com/thlorenz/WebGLCraft/master/assets/devtools-breakpoint.png" alt="minecraft-shot"></p>
+<p>Another example allows <a href="http://thlorenz.github.com/es6ify/">debugging ES6 in the browser</a> (although that still has serious issues).</p>
+<h2 id="how-does-it-all-work-">How does it all work?</h2>
+<p>At this point you know everything to get going with source maps via browserify. The remaining post will go into more
+details of source maps and how they were added to browserify.</p>
+<h3 id="what-are-source-maps">What are source maps</h3>
+<p>In order to not litter the net with needless repetition I&#39;ll send you right over to this <a href="http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/">very thorough html5 rocks
+article on source maps</a>. Understanding the ins and
+outs of the <a href="http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/#toc-base64vlq">Base64 VLQ</a> section is not
+required ;)</p>
+<p>If you like to read proposals instead, I strongly recommend
+<a href="https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit">this</a>.</p>
+<p>One important thing to note is that the html5 rocks article omits one source map detail that became crucial for
+supporting source maps in browserify. Here is an example from the html5 rocks post:</p>
+<pre><code class="hljs js">{
+  version    :  <span class="hljs-number">3</span>,
+  file       :  <span class="hljs-string">"out.js"</span>,
+  sourceRoot :  <span class="hljs-string">""</span>,
+  sources    :  [<span class="hljs-string">"foo.js"</span>, <span class="hljs-string">"bar.js"</span>],
+  names      :  [<span class="hljs-string">"src"</span>, <span class="hljs-string">"maps"</span>, <span class="hljs-string">"are"</span>, <span class="hljs-string">"fun"</span>],
+  mappings   :  <span class="hljs-string">"AAgBC,SAAQ,CAAEA"</span>
+}</code></pre>
+
+<p>Here is an example of the proposed format from the just mentioned proposal:</p>
+<pre><code class="hljs js">{
+  version        :  <span class="hljs-number">3</span>,
+  file           :  “out.js”,
+  sourceRoot     :  <span class="hljs-string">""</span>,
+  sources        :  [<span class="hljs-string">"foo.js"</span>, <span class="hljs-string">"bar.js"</span>],
+  sourcesContent :  [<span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>],
+  names          :  [<span class="hljs-string">"src"</span>, <span class="hljs-string">"maps"</span>, <span class="hljs-string">"are"</span>, <span class="hljs-string">"fun"</span>],
+  mappings       :  <span class="hljs-string">"AA,AB;;ABCDE;"</span>
+}</code></pre>
+
+<p>Do you see the minor difference? Yes, it shows a <code>sourcesContent</code> property. We&#39;ll come back to that in a minute.</p>
+<p>In summary you should understand that source maps map generated lines and columns to the respective original lines and
+columns, essentially allowing to map a character in a generated file to a character in the original file.</p>
+<h3 id="the-browserify-bundle-chain">The browserify bundle chain</h3>
+<p>One very important thing to mention at this point is that the bundle generation process used by browserify is entirely
+stream based. This means that input data flows in, is transformed and flows back out. A good example is
+<a href="https://github.com/substack/browser-pack">browser-pack</a> which consumes a JSON stream of entries and produces the
+bundle string.</p>
+<p>The other important aspect is that James Halliday aka @substack is very keen on keeping the browserify API as simple as
+possible as well as keeping the browserify core focused and small. So the challenge was to add source maps in a manner which
+required the least changes to the existing API, kept most of the source map related logic out of the browserify itself, 
+yet handled all or at least most of the use cases.</p>
+<h3 id="the-first-attempt">The first attempt</h3>
+<p>Since at the time I wasn&#39;t aware of the meaning of the <code>sourcesContent</code> field, I came up with a
+<a href="https://github.com/substack/browser-pack/pull/3">solution</a> that required more changes to the browser-pack
+implementation and the browserify API than @substack had expected. Especially supporting different scenarious would have
+let to a <a href="https://github.com/substack/node-browserify/issues/322#issuecomment-14784651">fairly bloated API</a></p>
+<p>Fortunately <a href="https://github.com/forbeslindesay">Forbes Lindesay</a> pointed me to <a href="https://trac.webkit.org/changeset/111389">information about the sourcesContent
+field</a>. What this basically meant is that <strong>all</strong> the information regarding a
+source map could be included in it, <strong>even the content of the original file</strong>.</p>
+<p>That changed everything!</p>
+<h3 id="stream-all-the-things-">Stream all the things!</h3>
+<p>The ability to include the the content opens up lots of possibilities and has tremendous advantages over the first
+approach.</p>
+<p>Most importantly the API doesn&#39;t have to be able to supply any information at all, except if source maps are desired or not as it now
+does with a simple <code>--debug</code> flag. </p>
+<p>There are two possibilities when bundling a file:</p>
+<ul>
+<li>a) the file already contains a source map (with all its information, including the original content), as would
+be the case if it was transpiled from another language</li>
+<li>b) the file contains no source map yet</li>
+</ul>
+<p>If we encounter the first case, we need to decode the contained source map and offset it depending on where in the
+bundle the content of the file will end up. If we encounter the second case, we need to generate a source map for the
+file and offset it properly.</p>
+<p>Finally we need to combine the offset source maps of all files into one source map, encode it and append it to the bundle.</p>
+<p>In order to keep all this work out of the browser-pack module itself, I created
+<a href="https://github.com/thlorenz/combine-source-map">combine-source-map</a>. </p>
+<p>It handles the whole process:</p>
+<ul>
+<li>finds and decodes source maps inside added files or generates them if none are found </li>
+<li>returns the proper comment for the combined source map. </li>
+</ul>
+<p>In true modular fashion it relies on <a href="https://github.com/thlorenz/convert-source-map">convert-source-map</a> and
+<a href="https://github.com/thlorenz/inline-source-map">inline-source-map</a> to get most of the work done. All browser-pack itself has to
+do is keep track of the line numbers at which files are added to the bundle and pass them along to combine-source-map
+when adding each file.</p>
+<h3 id="it-s-just-strings">It&#39;s just Strings</h3>
+<p>The other cool aspect of just streaming strings this is that all different user cases can be satisfied without
+adding hooks or API features. The bundle itself contains the encoded source map along with <strong>all</strong> information.
+Therefore, if a user wants to customize the source map and or <a href="https://github.com/substack/node-browserify/issues/339">export it to a
+file</a> he can do so. </p>
+<p>The necessary steps are as follows:</p>
+<ul>
+<li>generate the bundle with source map enabled</li>
+<li>before writing or serving it, rip out the contained source map</li>
+<li>decode the source map in order to transform it however you please</li>
+<li>attach whatever you want in place of the source map to the bundle</li>
+</ul>
+<p>To simplify this I created another module, <a href="https://github.com/thlorenz/mold-source-map">mold-source-map</a>. It allows you
+to add a simple <strong>post</strong> bundle transform to archieve what you need. </p>
+<p>To show all source files relative to a certain directory (by default it uses the full path), you just do the following:</p>
+<pre><code class="hljs js">browserify()
+  .require(<span class="hljs-built_in">require</span>.resolve(<span class="hljs-string">'./main.js'</span>), { entry: <span class="hljs-literal">true</span> })
+  .bundle({ debug: <span class="hljs-literal">true</span> })
+  .pipe(<span class="hljs-built_in">require</span>(<span class="hljs-string">'mold-source-map'</span>).transformSourcesRelativeTo(jsRoot))
+  .pipe(fs.createWriteStream(bundlePath));</code></pre>
+
+<p>More transforms will be added in the future, but you can use the most powerful transform to pretty much do anything with
+the generated source map that I can imagine, even externalize it to an external map file as in the following example:</p>
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">mapFileUrlComment</span><span class="hljs-params">(sourcemap, cb)</span> </span>{
+  <span class="hljs-comment">// make source files appear under the following paths:</span>
+  <span class="hljs-comment">// /js</span>
+  <span class="hljs-comment">//    foo.js</span>
+  <span class="hljs-comment">//    main.js</span>
+  <span class="hljs-comment">// /js/wunder</span>
+  <span class="hljs-comment">//    bar.js </span>
+
+  sourcemap.sourceRoot(<span class="hljs-string">'file://'</span>); 
+  sourcemap.mapSources(mold.mapPathRelativeTo(jsRoot));
+
+  <span class="hljs-comment">// write map file and return a sourceMappingUrl that points to it</span>
+  fs.writeFile(mapFilePath, sourcemap.toJSON(<span class="hljs-number">2</span>), <span class="hljs-string">'utf-8'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(err)</span> </span>{
+    <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">return</span> <span class="hljs-built_in">console</span>.error(err);
+    cb(<span class="hljs-string">'//@ sourceMappingURL='</span> + path.basename(mapFilePath));
+  });
+}
+
+browserify()
+  .require(<span class="hljs-built_in">require</span>.resolve(<span class="hljs-string">'./project/js/main.js'</span>), { entry: <span class="hljs-literal">true</span> })
+  .bundle({ debug: <span class="hljs-literal">true</span> })
+  .pipe(<span class="hljs-built_in">require</span>(<span class="hljs-string">'mold-source-map'</span>).transform(mapFileUrlComment))
+  .pipe(fs.createWriteStream(bundlePath));</code></pre>
+
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>I hope I was able to give the reader a good idea of what source maps are in general and how they fit with browserify. </p>
+<p>I also hope that I helped people realize how powerful the idea of passing information encoded in a string can be. In
+this case it allows to keep modules that interact with browserify on either end of the pipeline totally decoupled from
+browserify itself</p>
+<p>As an example, the coffee script compiler has no notion of browserify, but simply instructing it to generate source
+maps with inlined <code>sourcesContent</code> (see
+<a href="https://github.com/substack/coffeeify/blob/947329a5c9c81e86c432968efe696e0585627c6c/index.js#L6">here</a> or
+<a href="https://github.com/thlorenz/caching-coffeeify/blob/c52fb11aae6c39144759c11f8ff4bedc4aa6864a/index.js#L17">here</a>) is
+enough to make this step compatible with the browserify pipeline.</p>
+<p>Finally I hope that source maps are another good reason for you to <strong>give browserify a try</strong> if you haven&#39;t done so.</p>
+<p><em>Please feel free to  ask questions and/or leave comments <a href="https://github.com/thlorenz/thlorenz.com-blog/issues/1">relating to this post</a>.</em></p>
+
+  </article>
+</body>
+</html>
+
+<!--
+vim: ft=handlebars
+-->

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <title>thlorenz.com blog</title>
+  <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+  <nav class="sidebar">
+    <ul>
+      <li>
+        <h3>Thorsten Lorenz</h3>
+      </li>
+      <li>
+        <img alt="avatar" src="https://avatars3.githubusercontent.com/u/192891?v=3&s=460">
+      </li>
+      <li><a href="/">home</a></li>
+      <li><a href="/about">about</a></li>
+    </ul>
+  </nav>
+  <article class="blog-post">
+    <time class="entry-date">Mon Oct 01 2012 08:30:28</time>
+    <h1>The Power of NodeJS Streams and the event-stream Module</h1>
+    <p>Streams are the number one topic in the nodejs community this year, so I decided to get a better understanding of what
+everybody is talking about by reading through one of the most cited libraries related to streams.</p>
+<p>I took a look at <a href="https://github.com/dominictarr">Dominic Tarr</a>&#39;s <a href="https://github.com/dominictarr/event-stream">event-stream module</a> and do understand now why people
+are so excited.</p>
+<p>It&#39;s all about piping and transforming data as is common in functional languages (e.g, Haskell). </p>
+<p>As pointed out by James Halliday (aka substack) in his <a href="http://www.youtube.com/watch?v=lQAV3bPOYHo&amp;feature=plcp">lxjs
+talk</a> this approach is also a big part of Unix.</p>
+<p>Unix is all about using lots of tools - which each of which do only one small thing - and string them together to archieve a bigger
+goal.</p>
+<p>In nodejs/javascript land the tools are modules. </p>
+<p>Not all of them implement the streaming API, and that is where modules like event-stream come in. </p>
+<p>It allows modules that only focus on one aspect to be wrapped in order to expose their functionality via a streaming
+API.</p>
+<p>Additionally if the outputs of one module don&#39;t match the inputs of the other, we can use event-stream&#39;s features to transform
+them so that they do.</p>
+<p>Finally nodejs&#39;s core modules support streams (e.g.,
+<a href="http://nodejs.org/api/fs.html#fs_fs_createreadstream_path_options">fs.createReadStream</a>
+and <a href="http://nodejs.org/api/http.html#http_request_pause">http.request</a>), which allows to handle certain tasks via streams
+from beginning to end.</p>
+<p>Below are my notes I took while reading through <a href="https://github.com/dominictarr/event-stream">event-stream</a> and related
+modules.</p>
+<p>If you want to run the examples do the following:</p>
+<pre><code class="hljs sh">git clone git://github.com/thlorenz/thlorenz.com-blog.git
+<span class="hljs-built_in">cd</span> thlorenz.com-blog/event-stream
+npm install
+<span class="hljs-built_in">cd</span> snippets</code></pre>
+
+<p>Now you can run each snippet with <code>node</code>.</p>
+<p>Also if you have suggestions, additions or corrections, please fork this blog. I&#39;m open to pull requests.</p>
+<h2 id="modules-that-support-event-stream">Modules that support event-stream</h2>
+<p>Event stream uses and exposes a bunch of useful functions that have been split up into separate modules.</p>
+<p>This has the advantage that they can be used separately and/or swapped out as needed.</p>
+<p>In order to understand the <a href="https://github.com/dominictarr/event-stream">event-stream module</a> we need to look at them
+first.</p>
+<h3 id="-through-https-github-com-dominictarr-through-"><a href="https://github.com/dominictarr/through">through</a></h3>
+<ul>
+<li>shortcut to create duplex stream</li>
+<li>handles pause and resume</li>
+<li>optionally supply <code>write</code> and <code>end</code> methods into which underlying stream is passed via <code>this</code></li>
+<li>basis for synchronous streams in event-stream</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>internal <code>stream.write</code> call returns <code>!stream.paused</code></li>
+<li>takes care to <code>end</code> and <code>destroy</code> underlying stream properly (i.e. not prematurely)</li>
+<li><code>this.queue(data)</code> pushes data onto the <code>stream.buffer</code> and then <code>stream.drain</code>s it (unless it is paused)</li>
+<li><code>this.queue(null)</code> will emit <code>&#39;end&#39;</code></li>
+<li><code>drain</code> emits all <code>&#39;data&#39;</code> in the buffer and finally <code>&#39;end&#39;</code></li>
+</ul>
+<h3 id="-split-https-github-com-dominictarr-split-blob-master-package-json-"><a href="https://github.com/dominictarr/split/blob/master/package.json">split</a></h3>
+<ul>
+<li>splits the upstream data into chunks and emits them separately</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>uses <a href="https://github.com/dominictarr/through">through</a> to intercept the upstream writes</li>
+<li>splits buffer using <code>string.split</code> and emits pieces separately</li>
+</ul>
+<h4 id="example">Example</h4>
+<p>We split a file it into separate lines and re-emit them one by one with number of characters prepended. </p>
+<p>Additionally we keep track of the number of lines and emit that information when the read stream ends.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> through =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'through'</span>)
+  , split   =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'split'</span>)
+  , fs      =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>);
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">count</span> <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">var</span> lines = <span class="hljs-number">0</span>
+    , nonEmptyLines = <span class="hljs-number">0</span>;
+
+  <span class="hljs-keyword">return</span> through(
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">write</span> <span class="hljs-params">(data)</span> </span>{
+      lines++;
+      data.length &amp;&amp; nonEmptyLines++;
+      <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'data'</span>, <span class="hljs-string">'chars: '</span> + data.length + <span class="hljs-string">'\t'</span> + data + <span class="hljs-string">'\n'</span>);
+    }
+  , <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">end</span> <span class="hljs-params">()</span> </span>{
+      <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'data'</span>, <span class="hljs-string">'total lines: '</span> + lines + <span class="hljs-string">' | non empty lines: '</span> + nonEmptyLines);
+      <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'end'</span>);
+    }
+  );
+}
+
+fs.createReadStream(__filename, { encoding: <span class="hljs-string">'utf-8'</span> })
+  .pipe(split())
+  .pipe(count())
+  .pipe(process.stdout);</code></pre>
+
+<h5 id="output-">Output:</h5>
+<pre><code>➝  node through
+<span class="hljs-string">chars:</span> <span class="hljs-number">33</span> var through =  require(<span class="hljs-string">'through'</span>)
+<span class="hljs-string">chars:</span> <span class="hljs-number">31</span>   , split   =  require(<span class="hljs-string">'split'</span>)
+<span class="hljs-string">chars:</span> <span class="hljs-number">29</span>   , fs      =  require(<span class="hljs-string">'fs'</span>);
+<span class="hljs-string">chars:</span> <span class="hljs-number">0</span>  
+<span class="hljs-string">chars:</span> <span class="hljs-number">19</span> function count () {
+<span class="hljs-string">chars:</span> <span class="hljs-number">15</span>   var lines = <span class="hljs-number">0</span>
+<span class="hljs-string">chars:</span> <span class="hljs-number">24</span>     , nonEmptyLines = <span class="hljs-number">0</span>;
+<span class="hljs-string">chars:</span> <span class="hljs-number">0</span>  
+<span class="hljs-string">chars:</span> <span class="hljs-number">17</span>   <span class="hljs-keyword">return</span> through(
+<span class="hljs-string">chars:</span> <span class="hljs-number">27</span>     function write (data) {
+<span class="hljs-string">chars:</span> <span class="hljs-number">14</span>       lines++;
+<span class="hljs-string">chars:</span> <span class="hljs-number">37</span>       data.length &amp;&amp; nonEmptyLines++;
+<span class="hljs-string">chars:</span> <span class="hljs-number">70</span>       <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'data'</span>, <span class="hljs-string">'chars: '</span> + data.length + <span class="hljs-string">'\t'</span> + data + <span class="hljs-string">'\n'</span>);
+<span class="hljs-string">chars:</span> <span class="hljs-number">5</span>      }
+<span class="hljs-string">chars:</span> <span class="hljs-number">21</span>   , function end () {
+<span class="hljs-string">chars:</span> <span class="hljs-number">90</span>       <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'data'</span>, <span class="hljs-string">'total lines: '</span> + lines + <span class="hljs-string">' | non empty lines: '</span> + nonEmptyLines);
+<span class="hljs-string">chars:</span> <span class="hljs-number">23</span>       <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'end'</span>);
+<span class="hljs-string">chars:</span> <span class="hljs-number">5</span>      }
+<span class="hljs-string">chars:</span> <span class="hljs-number">4</span>    );
+<span class="hljs-string">chars:</span> <span class="hljs-number">1</span>  }
+<span class="hljs-string">chars:</span> <span class="hljs-number">0</span>  
+<span class="hljs-string">chars:</span> <span class="hljs-number">54</span> fs.createReadStream(__filename, { <span class="hljs-string">encoding:</span> <span class="hljs-string">'utf-8'</span> })
+<span class="hljs-string">chars:</span> <span class="hljs-number">16</span>   .pipe(split())
+<span class="hljs-string">chars:</span> <span class="hljs-number">16</span>   .pipe(count())
+<span class="hljs-string">chars:</span> <span class="hljs-number">24</span>   .pipe(process.stdout);
+total <span class="hljs-string">lines:</span> <span class="hljs-number">25</span> | non empty <span class="hljs-string">lines:</span> <span class="hljs-number">22</span></code></pre>
+
+<h3 id="-map-stream-https-github-com-dominictarr-map-stream-"><a href="https://github.com/dominictarr/map-stream">map-stream</a></h3>
+<ul>
+<li>takes an asnynchronous function and turns it into a through stream</li>
+<li>the async function has this signature: <code>function (data, callback) { .. }</code></li>
+<li>three ways to invoke callback - pretty much following accepted nodejs pattern (except for the last one):<ul>
+<li>transform data:  <code>callback(null, transformedData)</code></li>
+<li>emit an error:   <code>callback(error)</code></li>
+<li>filter out data: <code>callback()</code></li>
+</ul>
+</li>
+<li>(not documented) returning <code>false</code> from the mapping function will apply
+<a href="https://github.com/substack/stream-handbook#backpressure">backpressure</a> in order to prevent upstream from emitting
+data faster than it can handle</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>a stream is created</li>
+<li>when <code>stream.write</code> is called the mapper function is invoked with the given arguments and a <code>next</code> function as the
+callback</li>
+<li>when mapper calls <code>next</code>, it is delegated to the stream as follows:<ul>
+<li><code>next</code> is invoked with an error =&gt; <code>stream.emit(&#39;error&#39;, err)</code></li>
+<li><code>next</code> is invoked with a result =&gt; <code>stream.emit(&#39;data&#39;, res)</code></li>
+<li><code>next</code> is invoked without arguments =&gt; nothing gets emitted and therefore that piece of data gets dropped</li>
+</ul>
+</li>
+<li>if the stream was paused (due to backpressure) and all inputs where mapped, the stream is <code>drain</code>ed (this is archieved
+by keeping count of streamed inputs and mapped outputs)</li>
+</ul>
+<h4 id="example">Example</h4>
+<p>Similar to above except here we filter out empty lines and don&#39;t emit the number of lines at the end.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> map   =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'map-stream'</span>)
+  , split =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'split'</span>)
+  , fs    =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>);
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">count</span> <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">return</span> map(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(data, cb)</span> </span>{
+    <span class="hljs-comment">// ignore empty lines</span>
+    data.length ? 
+      cb(<span class="hljs-literal">null</span>, <span class="hljs-string">'chars: '</span> + data.length + <span class="hljs-string">'\t'</span> + data + <span class="hljs-string">'\n'</span>) : 
+      cb();
+  });
+}
+
+fs.createReadStream(__filename, { encoding: <span class="hljs-string">'utf-8'</span> })
+  .pipe(split())
+  .pipe(count())
+  .pipe(process.stdout);</code></pre>
+
+<h5 id="output-">Output:</h5>
+<pre><code>➝  node map-stream.js 
+<span class="hljs-string">chars:</span> <span class="hljs-number">34</span>    var map   =  require(<span class="hljs-string">'map-stream'</span>)
+<span class="hljs-string">chars:</span> <span class="hljs-number">29</span>      , split =  require(<span class="hljs-string">'split'</span>)
+<span class="hljs-string">chars:</span> <span class="hljs-number">27</span>      , fs    =  require(<span class="hljs-string">'fs'</span>);
+<span class="hljs-string">chars:</span> <span class="hljs-number">19</span>    function count () {
+<span class="hljs-string">chars:</span> <span class="hljs-number">34</span>      <span class="hljs-keyword">return</span> map(function (data, cb) {
+<span class="hljs-string">chars:</span> <span class="hljs-number">25</span>        <span class="hljs-comment">// ignore empty lines</span>
+<span class="hljs-string">chars:</span> <span class="hljs-number">18</span>        data.length ? 
+chars: <span class="hljs-number">63</span>          cb(<span class="hljs-literal">null</span>, <span class="hljs-string">'chars: '</span> + data.length + <span class="hljs-string">'\t'</span> + data + <span class="hljs-string">'\n'</span>) : 
+<span class="hljs-string">chars:</span> <span class="hljs-number">11</span>          cb();
+<span class="hljs-string">chars:</span> <span class="hljs-number">5</span>      });
+<span class="hljs-string">chars:</span> <span class="hljs-number">1</span>    }
+<span class="hljs-string">chars:</span> <span class="hljs-number">54</span>    fs.createReadStream(__filename, { <span class="hljs-string">encoding:</span> <span class="hljs-string">'utf-8'</span> })
+<span class="hljs-string">chars:</span> <span class="hljs-number">16</span>      .pipe(split())
+<span class="hljs-string">chars:</span> <span class="hljs-number">16</span>      .pipe(count())
+<span class="hljs-string">chars:</span> <span class="hljs-number">24</span>      .pipe(process.stdout);</code></pre>
+
+<h3 id="-duplexer-https-github-com-raynos-duplexer-"><a href="https://github.com/Raynos/duplexer">duplexer</a></h3>
+<ul>
+<li><code>duplex (writeStream, readStream)</code></li>
+<li>creates a duplex (readable and writable) stream from two streams, one of which is <code>readable</code> and the other being
+<code>writable</code> </li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>creates a new stream and returns it</li>
+<li>proxies all write methods of the write stream to the new stream</li>
+<li>proxies all read methods and events of the read stream to the new stream</li>
+<li>proxies <code>writable</code> and <code>readable</code> properties to the appropriate streams</li>
+<li>reemits errors of both streams via the new stream</li>
+</ul>
+<h3 id="-pause-stream-https-github-com-dominictarr-pause-stream-"><a href="https://github.com/dominictarr/pause-stream">pause-stream</a></h3>
+<ul>
+<li>fixes badly behaved streams, that don&#39;t pause/resume correctly</li>
+<li>strictly buffers when paused because either:<ul>
+<li>stream was paused manually</li>
+<li>downstream&#39;s <code>stream.write()</code> returned false to signal that the upstream should slow down</li>
+</ul>
+</li>
+<li>if upstream buffer writes while paused, that data is pushed onto the underlying buffer</li>
+<li>when stream is resumed or downstream emits <code>&#39;drain&#39;</code> the underlying buffer is drained and its data <code>emit</code>ted
+downstream</li>
+</ul>
+<h3 id="-from-https-github-com-dominictarr-from-blob-master-readme-markdown-"><a href="https://github.com/dominictarr/from/blob/master/readme.markdown">from</a></h3>
+<p>This module is neither used nor documented inside <a href="https://github.com/dominictarr/event-stream">event-stream</a>.</p>
+<p>I only include it here for completeness&#39; sake.</p>
+<ul>
+<li>takes getChunk func and returns a stream</li>
+<li>getChunk:<ul>
+<li>emits data to push </li>
+<li>emits end to signal or returns false (if synchronous) if it is finished (optional)</li>
+<li>calls passed <code>next()</code> whenever it is ready for next chunk</li>
+<li><code>this</code> is assigned to underlying stream</li>
+</ul>
+</li>
+<li>optionally takes Array of chunks which will be piped throught the stream synchronously</li>
+</ul>
+<h2 id="-event-stream-https-github-com-dominictarr-event-stream-"><a href="https://github.com/dominictarr/event-stream">event-stream</a></h2>
+<p>Exposes all functions from the modules described above.</p>
+<p>It also introduces additional functions. Some of those are implemented using the above described module functions as
+building blocks.</p>
+<h3 id="-mapsync-https-github-com-dominictarr-event-stream-mapsync-syncfunction-"><a href="https://github.com/dominictarr/event-stream#mapsync-syncfunction">mapSync</a></h3>
+<ul>
+<li>same as <a href="https://github.com/dominictarr/map-stream">map-stream</a>, but callback is called synchronously and the given
+function returns the result instead of calling back with it</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>intercepts the stream using <a href="https://github.com/dominictarr/through">through</a> and does the following on
+<code>stream.write</code>:<ul>
+<li>calls the map function</li>
+<li><code>stream.emit</code>s the returned result unless it is <code>undefined</code></li>
+</ul>
+</li>
+</ul>
+<h4 id="example">Example</h4>
+<p>Exact same as <code>map-stream</code> example above with same kind of output.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> mapSync =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'event-stream'</span>).mapSync
+  , split   =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'split'</span>)
+  , fs      =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>);
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">count</span> <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">return</span> mapSync(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(data)</span> </span>{
+    <span class="hljs-comment">// ignore empty lines</span>
+    <span class="hljs-keyword">return</span> data.length ? 
+      <span class="hljs-string">'chars: '</span> + data.length + <span class="hljs-string">'\t'</span> + data + <span class="hljs-string">'\n'</span> : 
+      <span class="hljs-literal">undefined</span>;
+  });
+}
+
+fs.createReadStream(__filename, { encoding: <span class="hljs-string">'utf-8'</span> })
+  .pipe(split())
+  .pipe(count())
+  .pipe(process.stdout);</code></pre>
+
+<h3 id="array-string-operations">Array/String operations</h3>
+<h3 id="-join-https-github-com-dominictarr-event-stream-join-seperator-"><a href="https://github.com/dominictarr/event-stream#join-seperator">join</a></h3>
+<ul>
+<li>emits a separator between each chunk of data (similar to <code>Array.join</code>)</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>intercepts the stream using <a href="https://github.com/dominictarr/through">through</a> and does the following on
+<code>stream.write</code>:<ul>
+<li><code>stream.emit</code>s separator</li>
+<li><code>stream.emit</code>s the actual data</li>
+</ul>
+</li>
+</ul>
+<h4 id="example">Example</h4>
+<p>We first split the data into lines and then join them together, injecting an extra line each time.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> join  =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'event-stream'</span>).join
+  , split =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'split'</span>)
+  , fs    =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>);
+
+fs.createReadStream(__filename, { encoding: <span class="hljs-string">'utf-8'</span> })
+  .pipe(split())
+  .pipe(join(<span class="hljs-string">'\n******\n'</span>))
+  .pipe(process.stdout);</code></pre>
+
+<h5 id="output-">Output:</h5>
+<pre><code>➝  node join
+var join  =  require('event-stream').join
+<span class="hljs-keyword">*</span><span class="hljs-keyword">*</span><span class="hljs-keyword">*</span><span class="hljs-keyword">*</span><span class="hljs-keyword">*</span><span class="hljs-keyword">*</span>
+  , split =  require('split')
+<span class="hljs-keyword">*</span><span class="hljs-keyword">*</span><span class="hljs-keyword">*</span><span class="hljs-keyword">*</span><span class="hljs-keyword">*</span><span class="hljs-keyword">*</span>
+  , fs    =  require('fs');
+[..]</code></pre>
+
+<h3 id="-replace-https-github-com-dominictarr-event-stream-replace-from-to-"><a href="https://github.com/dominictarr/event-stream#replace-from-to">replace</a></h3>
+<ul>
+<li>takes <code>from</code> (<code>String</code> or <code>RegExp</code>) and <code>to</code> argument and replaces <code>from</code> with <code>to</code></li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>pipes the stream data through <code>split(from)</code> and then <code>join(to)</code>s it</li>
+</ul>
+<h4 id="example">Example</h4>
+<p>The below has the exact same effect as the above example for <code>join</code>.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> replace =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'event-stream'</span>).replace
+  , fs    =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>);
+
+fs.createReadStream(__filename, { encoding: <span class="hljs-string">'utf-8'</span> })
+  .pipe(replace(<span class="hljs-string">'\n'</span>, <span class="hljs-string">'\n******\n'</span>))
+  .pipe(process.stdout);</code></pre>
+
+<h3 id="json-converters">JSON converters</h3>
+<h3 id="-parse-https-github-com-dominictarr-event-stream-parse-"><a href="https://github.com/dominictarr/event-stream#parse">parse</a></h3>
+<ul>
+<li>parses JSON chunks </li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>intercepts the stream using <a href="https://github.com/dominictarr/through">through</a></li>
+<li>converts <code>data</code> string to a JavaScript object via <code>JSON.parse</code> and <code>stream.emit</code>s it</li>
+</ul>
+<h3 id="-stringify-https-github-com-dominictarr-event-stream-stringify-"><a href="https://github.com/dominictarr/event-stream#stringify">stringify</a></h3>
+<ul>
+<li>converts JavaScript objects to a <code>String</code></li>
+<li>works in tandem with <code>parse</code> and therefore escapes whitespace and terminates each object with <code>&#39;\n&#39;</code></li>
+<li>supports <code>Buffer</code>s and plain JavaScript objects</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>intercepts the stream using <a href="https://github.com/dominictarr/event-stream#mapsync-syncfunction">mapSync</a></li>
+<li>returns result of <code>JSON.stringify</code> of the input</li>
+</ul>
+<h4 id="example">Example</h4>
+<p>This example should give a glimpse on how powerful streams can be.</p>
+<p>Notably, the ability to inject simple transformer functions in order to adapt outputs to inputs expected by the
+function that is next in the flow is important.</p>
+<p>This allows to compose all kinds of small functions that do one tiny thing in order to archieve quite complex tasks in a
+most performant way with the smallest memory footprint possible.</p>
+<p>The comments should suffice to show what is going on in the code.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> Stream    =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'stream'</span>)
+  , es        =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'event-stream'</span>);
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">objectStream</span> <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">var</span> s = <span class="hljs-keyword">new</span> Stream()
+    , objects = <span class="hljs-number">0</span>;
+
+  <span class="hljs-keyword">var</span> iv = setInterval(
+      <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
+        s.emit(<span class="hljs-string">'data'</span>, { id: objects, created: <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>() });
+        <span class="hljs-keyword">if</span> (++objects === <span class="hljs-number">3</span>) {
+            s.emit(<span class="hljs-string">'end'</span>);
+            clearInterval(iv);
+        }
+      }
+    , <span class="hljs-number">20</span>);
+  <span class="hljs-keyword">return</span> s;
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">tap</span> <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">return</span> es.through(
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">write</span> <span class="hljs-params">(data)</span> </span>{
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'\n'</span> + data);
+      <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'data'</span>, data);
+    }
+  );
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">padId</span> <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">return</span> es.mapSync(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(obj)</span> </span>{
+    obj.id = <span class="hljs-string">'000'</span> + obj.id;
+    <span class="hljs-keyword">return</span> obj;
+  });
+}
+
+objectStream()
+  .pipe(es.stringify())   <span class="hljs-comment">// prepare for printing</span>
+  .pipe(tap())            <span class="hljs-comment">// print intermediate result</span>
+  .pipe(es.parse())       <span class="hljs-comment">// convert back to object</span>
+  .pipe(padId())          <span class="hljs-comment">// change it a bit</span>
+  .pipe(es.stringify())   <span class="hljs-comment">// prepare for printing</span>
+  .pipe(process.stdout);  <span class="hljs-comment">// print final result</span></code></pre>
+
+<h5 id="output-">Output:</h5>
+<pre><code>➝  <span class="hljs-keyword">node</span> json
+
+<span class="hljs-keyword">{</span><span class="hljs-string">"id"</span>:<span class="hljs-number">0</span>,<span class="hljs-string">"created"</span>:<span class="hljs-string">"2012-10-01T12:10:13.905Z"</span><span class="hljs-keyword">}</span>
+
+<span class="hljs-keyword">{</span><span class="hljs-string">"id"</span>:<span class="hljs-string">"0000"</span>,<span class="hljs-string">"created"</span>:<span class="hljs-string">"2012-10-01T12:10:13.905Z"</span><span class="hljs-keyword">}</span>
+
+<span class="hljs-keyword">{</span><span class="hljs-string">"id"</span>:<span class="hljs-number">1</span>,<span class="hljs-string">"created"</span>:<span class="hljs-string">"2012-10-01T12:10:13.928Z"</span><span class="hljs-keyword">}</span>
+
+<span class="hljs-keyword">{</span><span class="hljs-string">"id"</span>:<span class="hljs-string">"0001"</span>,<span class="hljs-string">"created"</span>:<span class="hljs-string">"2012-10-01T12:10:13.928Z"</span><span class="hljs-keyword">}</span>
+
+<span class="hljs-keyword">{</span><span class="hljs-string">"id"</span>:<span class="hljs-number">2</span>,<span class="hljs-string">"created"</span>:<span class="hljs-string">"2012-10-01T12:10:13.950Z"</span><span class="hljs-keyword">}</span>
+
+<span class="hljs-keyword">{</span><span class="hljs-string">"id"</span>:<span class="hljs-string">"0002"</span>,<span class="hljs-string">"created"</span>:<span class="hljs-string">"2012-10-01T12:10:13.950Z"</span><span class="hljs-keyword">}</span></code></pre>
+
+<h3 id="-readable-https-github-com-dominictarr-event-stream-readable-asyncfunction-"><a href="https://github.com/dominictarr/event-stream#readable-asyncfunction">readable</a></h3>
+<ul>
+<li>creates a <code>readable</code> stream from an async function</li>
+<li>that stream respects <code>pause</code></li>
+<li>function has the following signature <code>function (count, callback) { .. }</code></li>
+<li>the underlying stream is passed via <code>this</code></li>
+<li>anytime <code>this.emit</code> is called from inside the function, that data is passed downstream</li>
+<li>the passed <code>callback</code> needs to be called to signal that we are ready to be called again</li>
+<li>an optional <code>continueOnError</code> flag can be passed to configure if the stream will end on error or not</li>
+<li>while the stream is not paused the given function will be called repeatedly</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>the nodejs event loop is used to continuously poll the passed function and <code>stream.emit</code> the generated data</li>
+<li>a <code>readable</code> stream is created to be passed into the function as <code>this</code></li>
+<li>the function is polled on every <code>process.nextTick</code> unless it is currently handling a request or the stream is ended or
+paused</li>
+<li>when the function calls back with an error it is handled as follows:<ul>
+<li>if <code>continueOnError</code> is true nothing happens</li>
+<li>otherwise <code>stream.emit(&#39;end&#39;)</code> is called</li>
+</ul>
+</li>
+<li>when the function calls back with data it is <code>stream.emit</code>ted</li>
+</ul>
+<h4 id="example">Example</h4>
+<p>Ten Squares shows how to use plain old callback to pass on data.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> es = <span class="hljs-built_in">require</span>(<span class="hljs-string">'event-stream'</span>);
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">tenSquares</span> <span class="hljs-params">(count, cb)</span> </span>{
+  <span class="hljs-keyword">return</span> count &lt; <span class="hljs-number">10</span> ? cb(<span class="hljs-literal">null</span>, count * count) : <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'end'</span>);
+}
+
+es.readable(tenSquares)
+  .pipe(es.stringify())
+  .pipe(process.stdout);</code></pre>
+
+<h5 id="output-">Output:</h5>
+<pre><code>➝  <span class="hljs-keyword">node</span> readable-squares
+<span class="hljs-number">0</span>
+<span class="hljs-number">1</span>
+<span class="hljs-number">4</span>
+<span class="hljs-number">9</span>
+<span class="hljs-number">16</span>
+<span class="hljs-number">25</span>
+<span class="hljs-number">36</span>
+<span class="hljs-number">49</span>
+<span class="hljs-number">64</span>
+<span class="hljs-number">81</span></code></pre>
+
+<p>Three Cubes shows how to manually <code>stream.emit</code> the data and then invoke the callback to be called again.</p>
+<p>Note how we can emit as many times as we like.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> es = <span class="hljs-built_in">require</span>(<span class="hljs-string">'event-stream'</span>);
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">threeCubes</span> <span class="hljs-params">(count, cb)</span> </span>{
+  <span class="hljs-keyword">if</span> (count &lt; <span class="hljs-number">3</span>) {
+    <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'data'</span>, <span class="hljs-string">'Cubing '</span> + count);
+    <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'data'</span>, count * count * count);
+    <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'data'</span>, <span class="hljs-string">'OK'</span>);
+    cb();
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-keyword">this</span>.emit(<span class="hljs-string">'end'</span>);
+  }
+}
+
+es.readable(threeCubes)
+  .pipe(es.stringify())
+  .pipe(process.stdout);</code></pre>
+
+<h5 id="output-">Output:</h5>
+<pre><code>➝  <span class="hljs-keyword">node</span> readable-cubes
+<span class="hljs-string">"Cubing 0"</span>
+<span class="hljs-number">0</span>
+<span class="hljs-string">"OK"</span>
+<span class="hljs-string">"Cubing 1"</span>
+<span class="hljs-number">1</span>
+<span class="hljs-string">"OK"</span>
+<span class="hljs-string">"Cubing 2"</span>
+<span class="hljs-number">8</span>
+<span class="hljs-string">"OK"</span></code></pre>
+
+<h3 id="-readarray-https-github-com-dominictarr-event-stream-readarray-array-"><a href="https://github.com/dominictarr/event-stream#readarray-array">readArray</a></h3>
+<ul>
+<li>creates a <code>readable</code> stream from an Array</li>
+<li>each item is piped separately downstream</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>a <code>readable</code> stream is created</li>
+<li>the array is iterated over and each item <code>stream.emit</code>ted</li>
+<li>the iterating process can be interrupted when the stream ends or is paused </li>
+<li>in case the iteration was interrupted the stream a continuous attempt to resume the stream is made
+(<code>process.nextTick</code>)</li>
+</ul>
+<h3 id="-writearray-https-github-com-dominictarr-event-stream-writearray-callback-"><a href="https://github.com/dominictarr/event-stream#writearray-callback">writeArray</a></h3>
+<ul>
+<li>creates a <code>writable</code> stream from a callback</li>
+<li>when the upstream ends, the callback is invoked with an array into which the emitted items were buffered</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>a <code>writable</code> stream and an empty array are created </li>
+<li>whenever a <code>stream.write</code> occurs, the written item is pushed onto the created array</li>
+<li>when <code>stream.end</code> is invoked the callback is called with the buffered items</li>
+<li>when an error occurs (i.e. when an attempt to destroy the stream before it was ended is made), the callback is invoked
+with the error</li>
+</ul>
+<h4 id="example">Example</h4>
+<p>We use <code>readArray</code> to generate a stream of values which we the multiply by 10 and pipe into <code>writeArray</code> so we can
+validate the resulting array.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> es = <span class="hljs-built_in">require</span>(<span class="hljs-string">'event-stream'</span>) ;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">multiplyByTen</span> <span class="hljs-params">(item, cb)</span> </span>{
+  <span class="hljs-comment">// long running async operation ;)</span>
+  setTimeout(
+      <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{ cb(<span class="hljs-literal">null</span>, item * <span class="hljs-number">10</span>); }
+    , <span class="hljs-number">50</span>
+  );
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">validate</span><span class="hljs-params">(err, array)</span> </span>{
+  <span class="hljs-keyword">if</span> (!err &amp;&amp; array.toString() === <span class="hljs-string">'0,10,20,30'</span>)
+   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'OK'</span>);
+  <span class="hljs-keyword">else</span> 
+   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'NOT OK'</span>);
+}
+
+es.readArray([<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>])        <span class="hljs-comment">// generate data</span>
+  .pipe(es.map(multiplyByTen))    <span class="hljs-comment">// transform asynchronously </span>
+  .pipe(es.writeArray(validate)); <span class="hljs-comment">// validate and print result</span></code></pre>
+
+<h5 id="output-">Output:</h5>
+<pre><code>➝  node <span class="hljs-built_in">read</span>Array
+OK</code></pre>
+
+<h3 id="-child-https-github-com-dominictarr-event-stream-child-child_process-"><a href="https://github.com/dominictarr/event-stream#child-child_process">child</a></h3>
+<ul>
+<li>creates a through stream from a child process</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>creates a duplex stream from the <code>child.stdin</code> and <code>child.stdout</code></li>
+</ul>
+<h4 id="example">Example</h4>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> cp = <span class="hljs-built_in">require</span>(<span class="hljs-string">'child_process'</span>)
+  , fs = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>)
+  , es = <span class="hljs-built_in">require</span>(<span class="hljs-string">'event-stream'</span>);
+
+<span class="hljs-comment">// same as: &gt; cat thisfile | grep Stream</span>
+fs.createReadStream(__filename)
+  .pipe(es.child(cp.exec(<span class="hljs-string">'grep Stream'</span>)))
+  .pipe(process.stdout);</code></pre>
+
+<h5 id="output-">Output:</h5>
+<pre><code>➝  node child
+<span class="hljs-comment">// same as: &gt; cat thisfile | grep Stream</span>
+fs.<span class="hljs-function"><span class="hljs-title">createReadStream</span><span class="hljs-params">(__filename)</span></span>
+  .<span class="hljs-function"><span class="hljs-title">pipe</span><span class="hljs-params">(es.child(cp.exec(<span class="hljs-string">'grep Stream'</span>)</span></span>))</code></pre>
+
+<h3 id="-wait-https-github-com-dominictarr-event-stream-wait-callback-"><a href="https://github.com/dominictarr/event-stream#wait-callback">wait</a></h3>
+<ul>
+<li>aggregates <code>emit</code>ted chunks of a stream into a single string and <code>emit</code>s it when the stream <code>end</code>s</li>
+<li>optionally also invokes a callback with the final string</li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>intercepts the stream using <a href="https://github.com/dominictarr/through">through</a> and appends <code>stream.write</code> chunks to a
+single string</li>
+<li>on <code>stream.end</code> <code>emit</code>s that string followed by <code>stream.end</code> and calls callback with the string if it was passed</li>
+</ul>
+<h4 id="example">Example</h4>
+<p>We emit an array of characters via <code>readArray</code> and use <code>wait</code> to aggregate them into one string so we can then surround
+it using <code>mapSync</code>.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> es = <span class="hljs-built_in">require</span>(<span class="hljs-string">'event-stream'</span>);
+
+es.readArray([ <span class="hljs-string">'e'</span>, <span class="hljs-string">'l'</span>, <span class="hljs-string">'u'</span>, <span class="hljs-string">'r'</span>, <span class="hljs-string">' '</span>, <span class="hljs-string">'s'</span>, <span class="hljs-string">'m'</span>, <span class="hljs-string">'a'</span>, <span class="hljs-string">'e'</span>, <span class="hljs-string">'r'</span>, <span class="hljs-string">'t'</span>, <span class="hljs-string">'s'</span> ].reverse())
+  .pipe(es.wait())
+  .pipe(es.mapSync(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(data)</span> </span>{ <span class="hljs-keyword">return</span> <span class="hljs-string">'"'</span> + data + <span class="hljs-string">'!"'</span>; }))
+  .pipe(process.stdout);</code></pre>
+
+<h5 id="output-">Output:</h5>
+<p>I leave this one to the reader to find out :)</p>
+<h3 id="-pipeline-https-github-com-dominictarr-event-stream-pipeline-stream1streamn-"><a href="https://github.com/dominictarr/event-stream#pipeline-stream1streamn">pipeline</a></h3>
+<ul>
+<li>turns multiple streams into a single stream which writes to the first stream and reads from the last</li>
+<li><code>pipeline(s1, s2, s3)</code> is syntactic sugar for <code>s1.pipe(s2).pipe(s3)</code> </li>
+</ul>
+<h4 id="under-the-hood">Under the hood</h4>
+<ul>
+<li>creates a <code>duplex</code> stream from the first and the last stream</li>
+<li>iterates through all streams and pipes adjacent ones into each other</li>
+<li>sets up error handling so that an error will bubble all the way to the last stream if it is emitted from any of the
+streams inside the chain</li>
+</ul>
+<h4 id="example">Example</h4>
+<pre><code class="hljs javascript">someStream()
+  .pipe(parse())         
+  .pipe(stringify())      
+  .pipe(process.stdout);
+
+<span class="hljs-comment">// can be rewritten as</span>
+es.pipeline(
+    someStream()
+  , parse()
+  , stringify()
+  , process.stdout
+);</code></pre>
+
+<p>I hope this helps to shine some light on the power and inner workings of streams and associated modules.</p>
+<p>Reading through these surely did hat for me, so I encourage you to do the same.</p>
+<p>Be on the lookout for more posts about streaming, but in the meantime I recommend the following nodejs stream resources:</p>
+<ul>
+<li>substack&#39;s <a href="https://github.com/substack/stream-handbook">stream handbook</a></li>
+<li>Max Ogden&#39;s <a href="http://maxogden.com/node-streams">Node Streams: How do they work?</a></li>
+<li>Dominic Tarr&#39;s <a href="https://gist.github.com/2401787">High level style in JavaScript</a></li>
+<li><a href="http://nodejs.org/docs/latest/api/stream.html#stream_stream">core stream documentation</a></li>
+</ul>
+
+  </article>
+</body>
+</html>
+
+<!--
+vim: ft=handlebars
+-->

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <title>thlorenz.com blog</title>
+  <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+  <nav class="sidebar">
+    <ul>
+      <li>
+        <h3>Thorsten Lorenz</h3>
+      </li>
+      <li>
+        <img alt="avatar" src="https://avatars3.githubusercontent.com/u/192891?v=3&s=460">
+      </li>
+      <li><a href="/">home</a></li>
+      <li><a href="/about">about</a></li>
+    </ul>
+  </nav>
+  <article class="blog-post">
+    <time class="entry-date">Tue Sep 18 2012 17:46:55</time>
+    <h1>Handling multiple failing async requests</h1>
+    <p>Especially when working with serverside javascript, there are a lot of cases where we need to perform a set of
+asynchronous tasks, and call back with a result when all are done.</p>
+<p>Lets take the example of filtering files from multiple entries.</p>
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">filterFiles</span> <span class="hljs-params">(entries, cb)</span> </span>{
+  <span class="hljs-keyword">var</span> tasks = entries.length
+    , files = [];
+
+  <span class="hljs-keyword">if</span> (tasks === <span class="hljs-number">0</span>) cb(<span class="hljs-literal">null</span>, []);
+
+  entries.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(entry)</span> </span>{
+    fs.stat(entry, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(err, stat)</span> </span>{
+      <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">return</span> cb(err);
+
+      <span class="hljs-keyword">if</span> (stat.isFile()) files.push(entry);
+
+      <span class="hljs-keyword">if</span> (--tasks === <span class="hljs-number">0</span>) cb(<span class="hljs-literal">null</span>, files);
+    });
+  });
+}</code></pre>
+
+<p>Unfortunately, if one of those file operations where to fail, we&#39;d still kick off the remaining ones if they are queued.
+Additionally we will call back with an error multiple times if more than one fail. </p>
+<p>In lots of scenarios though, if the first one fails, the remaining ones would also, so calling back with an error is
+exactly once is preferred.</p>
+<p>We can use an <code>abort</code> flag to accomplish this, as shown in the below snippet.</p>
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">filterFiles</span> <span class="hljs-params">(entries, cb)</span> </span>{
+  <span class="hljs-keyword">var</span> tasks = entries.length
+    , abort = <span class="hljs-literal">false</span>
+    , files = [];
+
+  <span class="hljs-keyword">if</span> (tasks === <span class="hljs-number">0</span>) cb(<span class="hljs-literal">null</span>, []);
+
+  entries.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(entry)</span> </span>{
+    <span class="hljs-keyword">if</span> (abort) <span class="hljs-keyword">return</span>;
+    fs.stat(entry, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(err, stat)</span> </span>{
+      <span class="hljs-keyword">if</span> (abort) <span class="hljs-keyword">return</span>;
+      <span class="hljs-keyword">if</span> (err) { abort = <span class="hljs-literal">true</span>; <span class="hljs-keyword">return</span> cb(err); }
+
+      <span class="hljs-keyword">if</span> (stat.isFile()) files.push(entry);
+
+      <span class="hljs-keyword">if</span> (--tasks === <span class="hljs-number">0</span>) cb(<span class="hljs-literal">null</span>, files);
+    });
+  });
+}</code></pre>
+
+<p>If any of our <code>fs.stat</code> requests errors out, we set the abort flag and call back with an error (one time).</p>
+<p>On line 9 we make sure that we don&#39;t kick off any more stat requests in case abort was signaled by a previous request
+that errored out.</p>
+<p>On line 11 we prevent requests that were pending while the first one errored out and now are calling back with an error, 
+from activating our error handler again.</p>
+<p>It&#39;s pretty simple, but makes our code behave a lot better.</p>
+
+  </article>
+</body>
+</html>
+
+<!--
+vim: ft=handlebars
+-->

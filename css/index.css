@@ -1,0 +1,207 @@
+html {
+ background: #252525;
+}
+body {
+  color: #222;
+  font-family: 'PT Serif', Georgia, Times, 'Times New Roman', serif;
+
+  -webkit-text-size-adjust: none;
+  max-width: 1200px;
+  position: relative;
+  margin: 0 auto;
+}
+
+a {
+  color: #1863a1;
+  transition: color 0.3s;
+}
+
+a:visited {
+  color: #751590;
+}
+.post-entry {
+  list-style-type: none;
+}
+
+@media all {
+  body > article,
+  body > section {
+    max-width: 1000px;
+    margin-left: 50px;
+    margin-right: 50px;
+    padding: 30px;
+    overflow: hidden;
+  }
+  body > section ul {
+    padding: 0;
+    margin: 0;
+  }
+  body > article img {
+    max-width: 820px;
+  }
+  body > nav {
+    width  : 100%;
+    margin : 0;
+  }
+  body > nav ul li,
+  body > nav ul li h3 {
+    display: inline;
+    padding-right: 20px;
+  }
+  body > nav ul img {
+    max-width: 80px;
+    position: absolute;
+    top: 50px;
+    right: 60px;
+    border-radius: 55px;
+  }
+}
+
+@media only screen and (min-width: 480px) {
+  body > article,
+  body > section {
+    padding-right: 25px
+  }
+  body > nav {
+    padding-left:25px; 
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  body > article,
+  body > section {
+      padding-right: 35px
+  }
+  body > nav {
+    padding-left:35px;
+  }
+}
+
+@media only screen and (min-width: 992px) {
+  body > article,
+  body > section {
+      padding-right: 55px
+  }
+  body > nav {
+    padding-left:55px;
+  }
+}
+
+@media only screen and (min-width: 1165px) {
+  body {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+  body > article,
+  body > section {
+    position: absolute;
+    right: 0;
+    left: 200px;
+    max-width: 800px;
+  }
+  body > nav {
+    position: absolute;
+    left: 20px;
+    padding: 0;
+  }
+  body > nav ul {
+    margin: 0;
+    padding: 0;
+    max-width: 220px;
+  }
+  body > nav ul li {
+    display: block;
+  }
+
+  body > nav ul img {
+    position: relative;
+    top: 0;
+    left: 0;
+    border-radius: 5px;
+    max-width: 220px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+}
+
+
+.blog-index,
+.blog-post {
+  background: #f8f8f8 url('http://octopress.org/images/noise.png?1420306322') top left;
+  border-radius: 5px;
+}
+
+.post-entry  a[rel=bookmark] {
+  text-decoration: none;
+}
+
+.post-entry h1 {
+  margin-bottom: 3px;
+}
+
+.post-entry h1 a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.post-entry h1 a:hover {
+  text-decoration: underline;
+  color: #0181eb
+}
+
+.post-entry .entry-summary p {
+  margin-bottom: 10px;
+}
+
+.post-entry .entry-readon {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.entry-date {
+  text-transform: uppercase
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 400;
+  color: #aaa;
+}
+
+code, pre {
+  font-family: Menlo, Consolas, Courier;
+  font-size: 13px;
+}
+
+p code {
+  background: rgb(234, 229, 229); 
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+pre code {
+  line-height: 18px;
+  margin: 5px;
+  border-radius: 3px;
+}
+
+blockquote {
+  font-size: 18px;
+  font-style: italic;
+}
+
+article > img {
+  max-width: 800px;
+}
+
+/* sidebar */
+body > nav {
+  color: #aaa;
+}
+
+body > nav a {
+  cursor: pointer;
+}
+
+body > nav ul {
+  list-style: none;
+}

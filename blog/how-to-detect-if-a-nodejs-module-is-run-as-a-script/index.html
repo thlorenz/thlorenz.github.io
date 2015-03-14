@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <title>thlorenz.com blog</title>
+  <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+  <nav class="sidebar">
+    <ul>
+      <li>
+        <h3>Thorsten Lorenz</h3>
+      </li>
+      <li>
+        <img alt="avatar" src="https://avatars3.githubusercontent.com/u/192891?v=3&s=460">
+      </li>
+      <li><a href="/">home</a></li>
+      <li><a href="/about">about</a></li>
+    </ul>
+  </nav>
+  <article class="blog-post">
+    <time class="entry-date">Thu Feb 21 2013 08:53:31</time>
+    <h1>How to detect if a nodejs module is run as a script</h1>
+    <h2 id="quick-answer">Quick Answer</h2>
+<h3 id="first-option-recommended-by-the-module-docs-http-nodejs-org-api-modules-html-modules_accessing_the_main_module-">First option, recommended by the <a href="http://nodejs.org/api/modules.html#modules_accessing_the_main_module">module docs</a></h3>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> runningAsScript = <span class="hljs-built_in">require</span>.main === <span class="hljs-built_in">module</span>;</code></pre>
+
+<h3 id="second-option-a-bit-shorter">Second option, a bit shorter</h3>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> runningAsScript = !<span class="hljs-built_in">module</span>.parent;</code></pre>
+
+<p>If you want to find out how the second option works, read on.</p>
+<h2 id="the-nodejs-module-parameter">The NodeJS Module Parameter</h2>
+<p>Every nodejs module gets a <code>module</code> variable injected when it is evaluated. So <code>module</code> is not global, but instead a
+parameter that is passed into a self invoking function that the module is wrapped with.</p>
+<p>It looks like this: </p>
+<pre><code class="hljs js">(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(exports, require, module, __filename, __dirname)</span> </span>{
+  <span class="hljs-comment">// module code here</span>
+})();</code></pre>
+
+<p>Quoting from the <a href="http://nodejs.org/api/modules.html#modules_module_parent">module documentation</a>, the parent of the
+module is:</p>
+<blockquote>
+<p>The module that required this one.</p>
+</blockquote>
+<p>So it follows that a module will have no parent if it is executed as a script.</p>
+<h2 id="a-simple-example">A Simple Example</h2>
+<p>We are going to use <a href="https://github.com/thlorenz/replpad">replpad</a> to load
+some code and inscpect things. You can follow along by cloning this blog <code>git clone
+git://github.com/thlorenz/thlorenz.com-blog.git</code>. </p>
+<p>Inside the <code>parent-module/snippets</code> folder you will find the sample files I use below.</p>
+<p>First we create the module that will be the parent <code>foo.js</code>.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> bar = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./bar'</span>);</code></pre>
+
+<p>The child, that is required by it, <code>bar.js</code> looks like this:</p>
+<pre><code class="hljs js">exports.module = <span class="hljs-built_in">module</span>;</code></pre>
+
+<p>In order to play around with them, lets fire up replpad:</p>
+<pre><code class="hljs sh">➜  parent-module  replpad .
+
+Loading replpad config from: /Users/thlorenz/.config/replpad/config.js
+
+Started watching: snippets/bar.js
+Started watching: snippets/foo.js
+Started watching: snippets/script.js
+Watching [<span class="hljs-number">3</span> files]
+
+replpad v0.<span class="hljs-number">5.0</span>
+
+node v0.<span class="hljs-number">8.16</span> | MacBook-Air.local | <span class="hljs-number">4</span> cpus | darwin platform | v8 v3.<span class="hljs-number">11.10</span>.<span class="hljs-number">25</span> | uv v0.<span class="hljs-number">8</span>
+
+plugins: vim | matchtoken
+
+If <span class="hljs-keyword">in</span> doubt, enter .help
+
+pad &gt;</code></pre>
+
+<p>Now we can open <code>foo.js</code> in an editor and save it in order to have replpad evaluate it. At this point we have access to
+bar&#39;s module since bar exports it.</p>
+<pre><code class="hljs sh">pad &gt; bar.module
+{ id: <span class="hljs-string">'[..]/thlorenz.com-blog/parent-module/snippets/bar.js'</span>,
+  exports: { module: [Circular] },
+  parent: 
+   { id: <span class="hljs-string">'[..]/thlorenz.com-blog/parent-module/snippets/foo.js'</span>,
+     exports: {},
+     parent: undefined,
+     filename: <span class="hljs-string">'[..]/thlorenz.com-blog/parent-module/snippets/foo.js'</span>,
+     loaded: <span class="hljs-literal">false</span>,
+     children: [ [Circular] ],
+     paths: 
+      [ [ .. ],
+        /Users/node_modules<span class="hljs-string">',
+        '</span>/node_modules<span class="hljs-string">' ] },
+  filename: '</span>[..]/thlorenz.com-blog/parent-module/snippets/bar.js<span class="hljs-string">',
+  loaded: true,
+  children: [],
+  paths: 
+   [ [ .. ], 
+     '</span>/Users/node_modules<span class="hljs-string">',
+     '</span>/node_modules<span class="hljs-string">' ] }
+pad &gt;</span></code></pre>
+
+<p>This prints all the module&#39;s properties (paths are shortened). As you can see bar&#39;s parent is foo, since that is the
+module that required it. However bar has not required any module itself and therefore has no children. </p>
+<p>Note that foo&#39;s children are output as <code>[Circular]</code> which makes sense.</p>
+<p>We can also print foo&#39;s module information, using the fact that foo&#39;s module is actually bar&#39;s parent.</p>
+<pre><code class="hljs sh">pad &gt; bar.module.parent
+{ id: <span class="hljs-string">'[..]/thlorenz.com-blog/parent-module/snippets/foo.js'</span>,
+  exports: {},
+  parent: undefined,
+  filename: <span class="hljs-string">'[..]/thlorenz.com-blog/parent-module/snippets/foo.js'</span>,
+  loaded: <span class="hljs-literal">false</span>,
+  children: 
+   [ { id: <span class="hljs-string">'[..]/thlorenz.com-blog/parent-module/snippets/bar.js'</span>,
+       exports: { module: [Circular] },
+       parent: [Circular],
+       filename: <span class="hljs-string">'[..]/thlorenz.com-blog/parent-module/snippets/bar.js'</span>,
+       loaded: <span class="hljs-literal">true</span>,
+       children: [],
+       paths: 
+        [ [ .. ],
+          <span class="hljs-string">'/Users/node_modules'</span>,
+          <span class="hljs-string">'/node_modules'</span> ] } ],
+  paths: 
+    [ [ .. ],
+     <span class="hljs-string">'/Users/node_modules'</span>,
+     <span class="hljs-string">'/node_modules'</span> ] }</code></pre>
+
+<p>Now we can see, that bar is indeed the only child of foo and that foo itself has no parent.</p>
+<p>Another interesting thing to realize is, that <code>bar</code> itself is actually the same object as the exports of its module:</p>
+<pre><code class="hljs sh">pad &gt; bar === bar.module.exports
+<span class="hljs-literal">true</span></code></pre>
+
+<h2 id="running-a-module-as-a-script">Running a module as a script</h2>
+<p>As a final proof of concept lets run a
+script from the command line and make sure that it really has no parent. I created one in the <code>snippets</code> folder:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> util = <span class="hljs-built_in">require</span>(<span class="hljs-string">'util'</span>);
+
+exports.hello = <span class="hljs-string">'world'</span>;
+<span class="hljs-built_in">console</span>.log(util.inspect(<span class="hljs-built_in">module</span>, <span class="hljs-literal">false</span>, <span class="hljs-number">5</span>, <span class="hljs-literal">true</span>));</code></pre>
+
+<p>Here is the output when we run it:</p>
+<pre><code class="hljs sh">➜  parent-module  node snippets/script.js 
+{ id: <span class="hljs-string">'.'</span>,
+  exports: { hello: <span class="hljs-string">'world'</span> },
+  parent: null,
+  filename: <span class="hljs-string">'[..]/thlorenz.com-blog/parent-module/snippets/script.js'</span>,
+  loaded: <span class="hljs-literal">false</span>,
+  children: [],
+  paths: 
+   [ [ .. ]. 
+     <span class="hljs-string">'/Users/node_modules'</span>,
+     <span class="hljs-string">'/node_modules'</span> ] }</code></pre>
+
+<p>As we can see, its <code>parent</code> is <code>null</code> since no other module required it.</p>
+
+  </article>
+</body>
+</html>
+
+<!--
+vim: ft=handlebars
+-->

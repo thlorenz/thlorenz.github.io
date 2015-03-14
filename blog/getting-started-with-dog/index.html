@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <title>thlorenz.com blog</title>
+  <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+  <nav class="sidebar">
+    <ul>
+      <li>
+        <h3>Thorsten Lorenz</h3>
+      </li>
+      <li>
+        <img alt="avatar" src="https://avatars3.githubusercontent.com/u/192891?v=3&s=460">
+      </li>
+      <li><a href="/">home</a></li>
+      <li><a href="/about">about</a></li>
+    </ul>
+  </nav>
+  <article class="blog-post">
+    <time class="entry-date">Sun Sep 16 2012 11:54:37</time>
+    <h1>Getting started with dog</h1>
+    <p><a href="http://github.com/thlorenz/dog">Dog</a> is a markdown based blogging engine, powered by nodejs.</p>
+<p>This post will give a quick introduction on dog and why I wrote it, followed by a tutorial on how to create, publish and
+then serve your own blog with it.</p>
+<h2 id="why-i-created-another-blogging-engine">Why I created another blogging Engine</h2>
+<p>I created dog in order to quickly share software related ideas, insights, etc.,. via a blog powered by
+<a href="http://nodejs.org/">nodejs</a>.</p>
+<p>In order to support that goal it needed to have the following features:</p>
+<ol>
+<li>powered by nodejs</li>
+<li>markdown based</li>
+<li>intuitive command line interface to preview and publish posts</li>
+<li>simple api to provide the rendered html for each post so I can serve it however I want </li>
+<li>first class code snippet support to allow:<ul>
+<li>inlined snippets</li>
+<li>snippets pulled in from external files on the fly</li>
+<li>syntax highlighting</li>
+</ul>
+</li>
+<li>meta tag support to pull in the following information:<ul>
+<li>post title</li>
+<li>post tags</li>
+<li>created and updated dates</li>
+</ul>
+</li>
+<li>simple to use command line for:<ul>
+<li>previewing post</li>
+<li>publishing post with title and tags information</li>
+</ul>
+</li>
+<li>easily stylable</li>
+</ol>
+<p>I searched for an existing engine with these features before creating my own.</p>
+<p>I looked into <a href="https://github.com/creationix/wheat">wheat</a>, <a href="https://github.com/dshaw/blogit">blogit</a> and lots of
+others.</p>
+<p>Most of them included a server and there seemed to be no easy way to otherwise provide the rendered html pages. Since my
+blog is part of my website which itself is already served, that was a dealbreaker to me.</p>
+<p>On the bright side I learned a lot by reading through the code of other blog engines and dog definitely was heavily
+inspired by them, especially the two mentioned above.</p>
+<h2 id="getting-started-with-dog">Getting started with dog</h2>
+<p>Enough preamble, lets launch into the tutorial which will teach you everything you need to know to create and serve your
+blog!</p>
+<p>The blog resulting from this tutorial is <a href="https://github.com/thlorenz/dog-example-getting-started">available on github</a>.</p>
+<h3 id="installing-dog">Installing dog</h3>
+<p>In the beginning we will use dog as a command line tool to preview and publish our blog, so we need to install it
+globally using <strong>npm</strong> which is available as part of the <a href="http://nodejs.org/#download">nodejs installer</a>.</p>
+<pre><code class="hljs sh">➝  npm install -g dog
+npm http GET https://registry.npmjs.org/dog
+[ .. ]
+npm http <span class="hljs-number">304</span> https://registry.npmjs.org/wordwrap
+/usr/local/bin/dog -&gt; /usr/local/lib/node_modules/dog/index.js
+dog@<span class="hljs-number">0.0</span>.<span class="hljs-number">11</span> /usr/local/lib/node_modules/dog
+├── ap@<span class="hljs-number">0.1</span>.<span class="hljs-number">0</span>
+├── dateformat@<span class="hljs-number">1.0</span>.<span class="hljs-number">2</span>-<span class="hljs-number">1.2</span>.<span class="hljs-number">3</span>
+├── runnel@<span class="hljs-number">0.0</span>.<span class="hljs-number">5</span>
+├── marked@<span class="hljs-number">0.2</span>.<span class="hljs-number">5</span>
+├── node-syntaxhighlighter@<span class="hljs-number">0.8</span>.<span class="hljs-number">1</span>
+├── npmlog@<span class="hljs-number">0.0</span>.<span class="hljs-number">2</span> (ansi@<span class="hljs-number">0.1</span>.<span class="hljs-number">2</span>)
+└── optimist@<span class="hljs-number">0.3</span>.<span class="hljs-number">4</span> (wordwrap@<span class="hljs-number">0.0</span>.<span class="hljs-number">2</span>)</code></pre>
+
+<h3 id="scaffolding-your-blog">Scaffolding your Blog</h3>
+<p>After the install is complete, create and navigate to the directory you want your blog to live in and use dog&#39;s
+scaffolder to get your blog started.</p>
+<pre><code class="hljs sh">➝  mkdir getting-started
+➝  <span class="hljs-built_in">cd</span> getting-started
+➝  dog scaffold
+info scaffolder Creating directories:
+info scaffolder mkdir assets
+info scaffolder mkdir assets/images
+info scaffolder mkdir assets/styles
+info scaffolder mkdir getting-started
+info scaffolder Copying images
+info scaffolder Copying styles
+info scaffolder Copying introductory post
+info scaffolder Your Developer blOG is now <span class="hljs-keyword">set</span> up and contains an introductory post <span class="hljs-string">"getting-started"</span>.
+info scaffolder You can preview it by typing:   dog preview getting-started
+info scaffolder You can publish it by typing:   dog publish getting-started -t <span class="hljs-string">"Getting Started"</span> -g <span class="hljs-string">"dog cli nodejs"</span>
+info scaffolder You can unpublish it by typing: dog unpublish getting-started
+info scaffolder Happy blogging!</code></pre>
+
+<p>This sets up your blog including an introductory post with the following folder/file structure:</p>
+<pre><code>.
+├── assets
+│   ├── images
+│   │   └── nodejs<span class="hljs-class">.png</span>
+│   └── styles
+│       ├── blog<span class="hljs-class">.css</span>
+│       ├── code-fixes<span class="hljs-class">.css</span>
+│       ├── <span class="hljs-tag">code</span><span class="hljs-class">.css</span>
+│       └── preview<span class="hljs-class">.css</span>
+└── getting-started
+    └── post.md</code></pre>
+
+<p><strong>Note:</strong> all posts have one markdown file which has to be called &#39;post.md&#39; since that is how dog expects it. The folder
+name is enough to separate the posts by name.</p>
+<h3 id="previewing-and-publishing-a-post">Previewing and Publishing a Post</h3>
+<p>As the scaffolder message tells you, you can now preview the &#39;getting-started&#39; post.</p>
+<p>Typing <code>dog preview getting-started</code> will open that post in the browser.</p>
+<p>Note the &quot;Unknown until published&quot; indicating that the post is still untitled and has no tags.</p>
+<p>In order to serve the post as part of your blog however, you need to publish it:</p>
+<pre><code class="hljs sh">➝  dog publish getting-started --title <span class="hljs-string">"Getting Started"</span> --tags <span class="hljs-string">"dog cli nodejs"</span>
+info publisher Created/Updated Post Metadata: {
+info publisher   <span class="hljs-string">"created"</span>: <span class="hljs-string">"2012-09-15T20:25:23.939Z"</span>,
+info publisher   <span class="hljs-string">"updated"</span>: <span class="hljs-string">"2012-09-15T20:25:23.939Z"</span>,
+info publisher   <span class="hljs-string">"tags"</span>: [
+info publisher     <span class="hljs-string">"dog"</span>,
+info publisher     <span class="hljs-string">"cli"</span>,
+info publisher     <span class="hljs-string">"nodejs"</span>
+info publisher   ],
+info publisher   <span class="hljs-string">"name"</span>: <span class="hljs-string">"getting-started"</span>,
+info publisher   <span class="hljs-string">"title"</span>: <span class="hljs-string">"Getting Started"</span>
+info publisher }
+info publisher Created/Updated Blog Metadata: {
+info publisher   <span class="hljs-string">"posts"</span>: [
+info publisher     <span class="hljs-string">"getting-started"</span>
+info publisher   ],
+info publisher   <span class="hljs-string">"tags"</span>: [
+info publisher     <span class="hljs-string">"dog"</span>,
+info publisher     <span class="hljs-string">"cli"</span>,
+info publisher     <span class="hljs-string">"nodejs"</span>
+info publisher   ],
+info publisher   <span class="hljs-string">"styles"</span>: [
+info publisher     <span class="hljs-string">"code"</span>,
+info publisher     <span class="hljs-string">"code-fixes"</span>,
+info publisher     <span class="hljs-string">"blog"</span>
+info publisher   ]
+info publisher }
+info publisher Post getting-started successfully published/updated</code></pre>
+The output tells you exactly what actions were performed and how your blog was updated.
+
+Your blog now has the following structure:
+
+<pre><code>.
+├── assets
+│   ├── images
+│   │   └── nodejs<span class="hljs-class">.png</span>
+│   └── styles
+│       ├── blog<span class="hljs-class">.css</span>
+│       ├── code-fixes<span class="hljs-class">.css</span>
+│       ├── <span class="hljs-tag">code</span><span class="hljs-class">.css</span>
+│       └── preview<span class="hljs-class">.css</span>
+├── blog<span class="hljs-class">.json</span>
+└── getting-started
+    ├── post<span class="hljs-class">.json</span>
+    └── post.md</code></pre>
+
+<p>Two new files where created: <code>post.json</code> and <code>blog.json</code>. </p>
+<p>The former contains metadata about the &#39;getting-started&#39; post, while the latter maintains the state of your entire blog.</p>
+<p>You can republish the same post multiple times. Only the &quot;updated&quot; date and anything else you supply will be changed.
+Everything else will remain the same. </p>
+<p>Lets update the title of our post:</p>
+<pre><code class="hljs sh">➝  dog publish getting-started --title <span class="hljs-string">"Getting Started Now"</span>
+info publisher Created/Updated Post Metadata: {
+info publisher   <span class="hljs-string">"created"</span>: <span class="hljs-string">"2012-09-15T20:25:23.939Z"</span>,
+info publisher   <span class="hljs-string">"updated"</span>: <span class="hljs-string">"2012-09-15T20:58:23.776Z"</span>,
+info publisher   <span class="hljs-string">"tags"</span>: [
+info publisher     <span class="hljs-string">"dog"</span>,
+info publisher     <span class="hljs-string">"cli"</span>,
+info publisher     <span class="hljs-string">"nodejs"</span>
+info publisher   ],
+info publisher   <span class="hljs-string">"name"</span>: <span class="hljs-string">"getting-started"</span>,
+info publisher   <span class="hljs-string">"title"</span>: <span class="hljs-string">"Getting Started Now"</span>
+info publisher }
+info publisher Created/Updated Blog Metadata: {
+info publisher   <span class="hljs-string">"posts"</span>: [
+info publisher     <span class="hljs-string">"getting-started"</span>
+info publisher   ],
+info publisher   <span class="hljs-string">"tags"</span>: [
+info publisher     <span class="hljs-string">"dog"</span>,
+info publisher     <span class="hljs-string">"cli"</span>,
+info publisher     <span class="hljs-string">"nodejs"</span>
+info publisher   ],
+info publisher   <span class="hljs-string">"styles"</span>: [
+info publisher     <span class="hljs-string">"code"</span>,
+info publisher     <span class="hljs-string">"code-fixes"</span>,
+info publisher     <span class="hljs-string">"blog"</span>
+info publisher   ]
+info publisher }
+info publisher Post getting-started successfully published/updated</code></pre>
+As you can see, while the title was updated, the tags were left unchanged.
+
+This concludes the section on using dog's command line in order to manage your blog.
+
+If you want to see what other actions and options are available you can find out via dog's help action:
+
+<pre><code>➝  dog <span class="hljs-keyword">help</span>
+dog &lt;action&gt; &lt;post&gt; [<span class="hljs-keyword">options</span>]
+
+Option<span class="hljs-variable">s:</span>
+  -<span class="hljs-keyword">a</span>, --action  One of the followin<span class="hljs-variable">g:</span> scaffold, preview, publish, unpublish, summary, includeStyles, <span class="hljs-keyword">help</span>
+  -<span class="hljs-keyword">p</span>, --post    The directory in which the post resides inside the blog directory                        
+  -<span class="hljs-keyword">r</span>, --root    The root directory of your blog <span class="hljs-keyword">e</span>.<span class="hljs-keyword">g</span>., the one that contains blog.json                      [defaul<span class="hljs-variable">t:</span> <span class="hljs-string">"./"</span>]
+  -<span class="hljs-keyword">t</span>, --title   The title <span class="hljs-keyword">to</span> give <span class="hljs-keyword">to</span> the post                                                            
+  -<span class="hljs-keyword">g</span>, --<span class="hljs-keyword">tags</span>    Tags which should <span class="hljs-keyword">be</span> applied <span class="hljs-keyword">to</span> the post                                                 
+  -<span class="hljs-keyword">s</span>, --styles  Styles (without <span class="hljs-string">".css"</span> extension) <span class="hljs-keyword">to</span> <span class="hljs-keyword">be</span> included when the blog <span class="hljs-keyword">is</span> provided                 [defaul<span class="hljs-variable">t:</span> <span class="hljs-string">"code code-fixes blog"</span>]</code></pre>
+
+<hr>
+<h3 id="providing-your-blog-via-a-website">Providing your blog via a website</h3>
+<p>Dog just provides post metadata and its rendered html, so you are most flexible to choose how you serve it up.</p>
+<p>I&#39;m going to demonstrate in a simplified example how to leverage the dog provider features in order to serve your blog
+on a website.</p>
+<p>Although we will be using <a href="https://github.com/flatiron/director">director</a> in this example, you could use any module or
+web framework like <a href="http://expressjs.com/">express</a> to route your requests.</p>
+<p>First lets install director and dog both locally:</p>
+<pre><code class="hljs sh">➝  npm install director
+npm http GET https://registry.npmjs.org/director
+npm http <span class="hljs-number">304</span> https://registry.npmjs.org/director
+director@<span class="hljs-number">1.1</span>.<span class="hljs-number">6</span> node_modules/director</code></pre>
+
+<pre><code class="hljs sh">➝  npm install dog
+npm http GET https://registry.npmjs.org/dog
+npm http <span class="hljs-number">304</span> https://registry.npmjs.org/dog
+[ .. ]
+npm http <span class="hljs-number">304</span> https://registry.npmjs.org/wordwrap
+dog@<span class="hljs-number">0.0</span>.<span class="hljs-number">12</span> node_modules/dog
+├── ap@<span class="hljs-number">0.1</span>.<span class="hljs-number">0</span>
+├── dateformat@<span class="hljs-number">1.0</span>.<span class="hljs-number">2</span>-<span class="hljs-number">1.2</span>.<span class="hljs-number">3</span>
+├── runnel@<span class="hljs-number">0.0</span>.<span class="hljs-number">5</span>
+├── marked@<span class="hljs-number">0.2</span>.<span class="hljs-number">5</span>
+├── node-syntaxhighlighter@<span class="hljs-number">0.8</span>.<span class="hljs-number">1</span>
+├── npmlog@<span class="hljs-number">0.0</span>.<span class="hljs-number">2</span> (ansi@<span class="hljs-number">0.1</span>.<span class="hljs-number">2</span>)
+└── optimist@<span class="hljs-number">0.3</span>.<span class="hljs-number">4</span> (wordwrap@<span class="hljs-number">0.0</span>.<span class="hljs-number">2</span>)</code></pre>
+
+<p>Now we are ready to write our simple server.</p>
+<p>For brevity&#39;s sake, I&#39;ll just show the most relevant snippets, but the entire file is part of the
+<a href="https://github.com/thlorenz/dog-example-getting-started/blob/master/app.js">app.js</a> inside the <a href="https://github.com/thlorenz/dog-example-getting-started">Getting Started Example
+repository</a>.</p>
+<p>We need to require the necessary modules, among them director and dog, and initialize some variable that are global to
+our server module.</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> director =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'director'</span>)
+  , dog      =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'dog'</span>)
+  , http     =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'http'</span>)
+  , fs       =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>)
+  , path     =  <span class="hljs-built_in">require</span>(<span class="hljs-string">'path'</span>)
+  , root     =  <span class="hljs-string">'http://localhost:3000/'</span>
+  , posts    =  { }
+  , blogCss;</code></pre>
+
+<p>Before we can serve the blog, we need to initialize it properly via the <code>dog.provider</code>.</p>
+<p>Somewhat simplified and with error handling removed that comes down to the below snippet:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// Tell dog where our blog lives</span>
+dog.provider.provideFrom(__dirname);
+
+<span class="hljs-comment">// Keep css for our blog in memory</span>
+dog.provider.concatenateStyles(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(err, css)</span> </span>{
+
+  blogCss = css;
+
+  <span class="hljs-comment">// Keep all posts (including rendered html) in memory as well</span>
+  dog.provider.provideAll(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(err, metadata)</span> </span>{
+
+    metadata.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(meta)</span> </span>{
+      posts[meta.name] = meta;      
+    });
+
+    serveSite();
+  });
+});</code></pre>
+
+<p>As the comments explain, we first tell dog, where our blog lives and store the actual css and all posts provided by dog
+inside <code>blogCss</code> and <code>posts</code> respectively.</p>
+<p>After the blog is initialized we are ready to serve it.</p>
+<p>The following snippet is a bit long, but skimming it should give you a good idea how to serve your blog which at this
+point is entirely contained in memory.</p>
+<p><strong>Note:</strong> some functions like <code>wrapnServe</code> have been omitted for brevity, but are included in the <a href="https://github.com/thlorenz/dog-example-getting-started/blob/master/app.js">source</a>.</p>
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">serveSite</span> <span class="hljs-params">()</span> </span>{
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getRoot</span> <span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">var</span> postList = <span class="hljs-built_in">Object</span>.keys(posts).map(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(name)</span> </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-string">'&lt;li&gt;&lt;a href="/post/'</span> + name + <span class="hljs-string">'"&gt;'</span> + posts[name].title + <span class="hljs-string">'&lt;/a&gt;&lt;/li&gt;'</span>;
+    });
+    wrapnServe(<span class="hljs-keyword">this</span>.res, <span class="hljs-string">'&lt;ul&gt;'</span> + postList + <span class="hljs-string">'&lt;/ul&gt;'</span>);
+  }
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getPost</span> <span class="hljs-params">(post)</span> </span>{
+    wrapnServe(<span class="hljs-keyword">this</span>.res, posts[post].html);
+  }
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getImage</span> <span class="hljs-params">(file)</span> </span>{
+    <span class="hljs-keyword">var</span> res = <span class="hljs-keyword">this</span>.res
+      , imgMime = path.extname(file).slice(<span class="hljs-number">1</span>)
+      , imageFile = path.join(dog.provider.getImagesDir(), file);
+
+    fs.readFile(imageFile, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(err, data)</span> </span>{
+      res.writeHead(<span class="hljs-number">200</span>, { <span class="hljs-string">'Content-Type'</span>: <span class="hljs-string">'image/'</span> + imgMime, <span class="hljs-string">'Content-Length'</span>: data.length });
+      res.end(data); 
+    });
+  }
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getBlogCss</span> <span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">this</span>.res.writeHead(<span class="hljs-number">200</span>, { <span class="hljs-string">'Content-Type'</span>: <span class="hljs-string">'text/css'</span>, <span class="hljs-string">'Content-Length'</span>: blogCss.length });
+    <span class="hljs-keyword">this</span>.res.end(blogCss); 
+  }
+
+  <span class="hljs-keyword">var</span> router = <span class="hljs-keyword">new</span> director.http.Router({
+      <span class="hljs-string">'/'</span>                :  { get :  getRoot }
+    , <span class="hljs-string">'/post/:post'</span>      :  { get :  getPost }
+    , <span class="hljs-string">'/styles/blog.css'</span> :  { get :  getBlogCss }
+    , <span class="hljs-string">'/images/:file'</span>    :  { get :  getImage }
+  });
+
+  <span class="hljs-keyword">var</span> server = http.createServer(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(req, res)</span> </span>{
+
+    router.dispatch(req, res, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(err)</span> </span>{
+      <span class="hljs-keyword">if</span> (err) {
+        <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'app'</span>, err);
+        res.writeHead(<span class="hljs-number">404</span>);
+        res.end();
+      }
+    });
+  });
+
+  server.listen(<span class="hljs-number">3000</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'server listening at '</span>, root);
+  });
+}</code></pre>
+
+<p>Assuming you implemented or downloaded the entire code inside &#39;app.js&#39; you can now <code>node app</code> to start the server.</p>
+<p>Point your browser to `<a href="http://localhost:3000">http://localhost:3000</a>&#39; to see the blog you are currently reading. Ironic isn&#39;t it?</p>
+<h3 id="creating-new-posts">Creating new posts</h3>
+<p>In order to create new posts, all you have to do is create a directory inside your blog and put a &#39;post.md&#39; inside of
+it.</p>
+<p>After that just follow the above instructions on how to publish a post and it will be included in your blog.</p>
+<hr>
+<h2 id="where-to-go-for-more-information">Where to go for more information</h2>
+<p>If you enjoyed this tutorial and are interested in learning more about dog, please consult the readme that is included.  </p>
+<p>You can either use the &#39;npm docs&#39; command: <code>npm docs dog</code> or directly go to the <a href="https://github.com/thlorenz/dog#readme">dog
+repository</a> in order to find more information.</p>
+<p>In case you find errors or have issues with dog, feel free to <a href="https://github.com/thlorenz/dog/issues">raise an issue</a>.</p>
+
+  </article>
+</body>
+</html>
+
+<!--
+vim: ft=handlebars
+-->

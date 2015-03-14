@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <title>thlorenz.com blog</title>
+  <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+  <nav class="sidebar">
+    <ul>
+      <li>
+        <h3>Thorsten Lorenz</h3>
+      </li>
+      <li>
+        <img alt="avatar" src="https://avatars3.githubusercontent.com/u/192891?v=3&s=460">
+      </li>
+      <li><a href="/">home</a></li>
+      <li><a href="/about">about</a></li>
+    </ul>
+  </nav>
+  <article class="blog-post">
+    <time class="entry-date">Sunday, January 26th, 2014, 9:19:49 PM</time>
+    <h1>Viewing man pages in Vim and Preview</h1>
+    <p>I recently came upon a collection of neat things you can do in the terminal on
+<a href="http://apple.stackexchange.com/questions/5435/got-any-tips-or-tricks-for-terminal-in-mac-os-x">stackoverflow</a>.</p>
+<p><a href="http://apple.stackexchange.com/a/5461">One of the <em>tricks</em></a> mentioned better ways to view man pages. From that answer I
+added two functions to my bash setup:</p>
+<pre><code class="hljs sh"><span class="hljs-comment"># Open a man page in vim</span>
+<span class="hljs-function"><span class="hljs-title">vman</span></span> () {
+  MANWIDTH=<span class="hljs-number">150</span> MANPAGER=<span class="hljs-string">'col -bx'</span> man <span class="hljs-variable">$@</span> | vim -R -c <span class="hljs-string">"set ft=man"</span> -
+}
+
+<span class="hljs-comment"># Open a man page in Preview:</span>
+<span class="hljs-function"><span class="hljs-title">pman</span></span> () {
+  man -t <span class="hljs-variable">$@</span> | open <span class="hljs-operator">-f</span> <span class="hljs-operator">-a</span> /Applications/Preview.app
+}</code></pre>
+
+<p>While <code>pman</code> is almost (see comments) exactly as found in the answer, <code>vman</code> was adapted from <code>tman</code> to work with vim.</p>
+<h2 id="vman">vman</h2>
+<p>The <code>vman</code> one liner basically just configures <code>man</code> to stay within a certain column range and pipes the result to vim
+as a readonly file with filetype <code>man</code>.</p>
+<p>The nice thing when opening the page in vim is that you can follow links and functions simply by placing your cursor
+over the name and <code>CTRL-]</code>. You can backtrack via <code>CTRL-O</code>.</p>
+<p>This even works in MacVim (I tried it), simply replace <code>vim</code> in the function with <code>mvim</code>.</p>
+<p><img src="https://raw.github.com/thlorenz/thlorenz.com-blog/master/assets/images/vman.gif" alt="vman"></p>
+<h2 id="pman">pman</h2>
+<p><code>pman</code> simply opens the man page in the <code>Preview</code> app and thus only works on Mac. The result is a man page that&#39;s much
+more readable at least for my eyes, but judge for yourself.</p>
+<p>Note that the first time you use it there is a slight delay before the page is rendered, but for all uses after that it
+comes up very quickly. I guess that some plugin is installed on first run to allow rendering postscript.</p>
+<p><img src="https://raw.github.com/thlorenz/thlorenz.com-blog/master/assets/images/pman.png" alt="pman"></p>
+<p><em>Please feel free to ask questions and/or leave comments <a href="https://github.com/thlorenz/thlorenz.com-blog/issues/5">relating to this post</a>.</em></p>
+
+  </article>
+</body>
+</html>
+
+<!--
+vim: ft=handlebars
+-->

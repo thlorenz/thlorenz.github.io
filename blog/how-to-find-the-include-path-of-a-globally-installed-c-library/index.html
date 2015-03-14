@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <title>thlorenz.com blog</title>
+  <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+  <nav class="sidebar">
+    <ul>
+      <li>
+        <h3>Thorsten Lorenz</h3>
+      </li>
+      <li>
+        <img alt="avatar" src="https://avatars3.githubusercontent.com/u/192891?v=3&s=460">
+      </li>
+      <li><a href="/">home</a></li>
+      <li><a href="/about">about</a></li>
+    </ul>
+  </nav>
+  <article class="blog-post">
+    <time class="entry-date">Sun Dec 15 2013 13:21:49</time>
+    <h1>How to find the include path of a globally installed C library</h1>
+    <p>In order to include a globally installed library via <code>-L</code> it helps to know how to find its include path, and this post
+shows how to find it quickly.</p>
+<p><strong>Note</strong>: These steps have been tested on a Mac, but should work exactly the same way on Linux.</p>
+<ol>
+<li>list all libraries to ensure that it is installed: <code>pkg-config --list-all</code></li>
+<li>find the path of the library you want to include:  <code>pkg-config --libs &lt;libname&gt;</code></li>
+</ol>
+<h2 id="sample-session">Sample Session</h2>
+<p>Here is how you&#39;d find the include string for <code>libedit</code>.</p>
+<pre><code class="hljs sh">➝  pkg-config --list-all
+liblzma      liblzma - General purpose data compression library
+libpcrecpp   libpcrecpp - PCRECPP - C++ wrapper <span class="hljs-keyword">for</span> PCRE
+openssl      OpenSSL - Secure Sockets Layer and cryptography libraries and tools
+apr-<span class="hljs-number">1</span>        APR - The Apache Portable Runtime library
+apr-util-<span class="hljs-number">1</span>   APR Utils - Companion library <span class="hljs-keyword">for</span> APR
+libcrypto    OpenSSL-libcrypto - OpenSSL cryptography library
+libpcre      libpcre - PCRE - Perl compatible regular expressions C library with <span class="hljs-number">8</span> bit character support
+libedit      libedit - command line editor library provides generic line editing, history, and tokenization functions.
+libpcreposix libpcreposix - PCREPosix - Posix compatible interface to libpcre
+libiodbc     iODBC - iODBC Driver Manager
+libssl       OpenSSL - Secure Sockets Layer and cryptography libraries
+
+➝  pkg-config --libs libedit
+-L/usr/local/lib -ledit -lcurses</code></pre>
+  </article>
+</body>
+</html>
+
+<!--
+vim: ft=handlebars
+-->
