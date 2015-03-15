@@ -1,10 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-  <title>thlorenz.com blog</title>
+  <title>thlorenz.com Talking scriptie-talkie</title>
+  <meta name="description" content="Talking scriptie-talkie javascript dog">
   <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
   <link rel="stylesheet" href="/css/index.css">
+  <!-- google analytics -->
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-38583213-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
 </head>
 
 <body>
@@ -18,10 +30,12 @@
       </li>
       <li><a href="/">home</a></li>
       <li><a href="/about">about</a></li>
+      <li><a href="https://github.com/thlorenz/thlorenz.com">source</a></li>
     </ul>
   </nav>
   <article class="blog-post">
     <time class="entry-date">Thu Apr 25 2013 08:00:33</time>
+    <a class="comments-link" href="#disqus_thread">Comments</a>
     <h1>Talking scriptie-talkie</h1>
     <p>I recently created <a href="http://thlorenz.github.io/scriptie-talkie/">scriptie-talkie</a>, a tool designed to make learning,
 writing and debugging JavaScript as interactive and fast as possible. </p>
@@ -54,7 +68,11 @@ answer the following questions:</p>
 <h2 id="examples">Examples</h2>
 <p>We will go through some code examples powered by
 <a href="http://thlorenz.github.io/scriptie-talkie-embed/">scriptie-talkie-embed</a> and things should become a lot clearer: </p>
-<p>{{ scriptie: variables++.js }}</p>
+<textarea class="scriptie-talkie">
+var a = 1;
+var b = ++a;
+</textarea>
+
 <p>On the left side you see the editor containing a short script, while the right side contains the result of
 scriptie-talkie running it.</p>
 <p>You may click on <strong><em>full view</em></strong> link in order to open the example inside a full page scriptie-talkie editor.</p>
@@ -72,20 +90,46 @@ which is indicated by <code>~ a: 2</code>.</p>
 <h3 id="showing-difference-of-a-and-a-">Showing difference of <code>++a</code> and <code>a++</code></h3>
 <p>Since we talked about using scriptie-talkie as a learning aid, let&#39;s demonstrate the difference betweent <code>a++</code> and
 <code>++a</code>:</p>
-<p>{{ scriptie: ++variables.js }}</p>
+<textarea class="scriptie-talkie">
+var a = 1;
+var b = a++;
+</textarea>
+
 <p>Now, when executing line 2, <code>var b = ++a;</code> a is incremented before it is assigned to b and therefore assigned to <code>2</code>.</p>
 <h3 id="objects-and-return-values">Objects and return Values</h3>
 <p>Lets look at an example that deals with objects instead of just primitive types:</p>
-<p>{{ scriptie: objects-returns.js }}</p>
+<textarea class="scriptie-talkie">
+var car = { 
+    miles: 100
+  , price: 1000 
+};
+car.price++;
+</textarea>
+
 <p>On lines 1-4 we create a car which is indicated via <code>+ car</code> on the right.</p>
 <p>On line 6 we increase the price of the car. This change is indicated by displaying the car properties with the new price
 in blue, compared to the old one <code>1001 // != 1000</code></p>
 <p>The <code>=&gt; 1000</code> at the bottom indicates that the old price was returned (which is something not everyone is aware of).</p>
 <p>We can use this fact in order to assign this value in order to keep track of the old price.</p>
-<p>{{ scriptie: objects-assign-returns.js }}</p>
+<textarea class="scriptie-talkie">
+var car = { 
+    miles: 100
+  , price: 1000 
+};
+var oldPrice = car.price++;
+</textarea>
+
 <h3 id="functions-and-side-effects">Functions and side effects</h3>
 <p>Lets add a function to drive the car:</p>
-<p>{{ scriptie: functions-sideeffects.js }}</p>
+<textarea class="scriptie-talkie">
+var car = { miles: 100 , price: 1000 };
+
+function drive(miles) {
+  car.miles += miles;
+}
+drive(22);
+</textarea>
+
 <p>Driving the car 22 miles had the side effect of increasing its mileage. This fact is clearly indicated by
 scriptie-talkie&#39;s output.</p>
 <p>This is very useful to explain features (in this case closures) to beginners. It also can help you to become aware of
@@ -94,15 +138,37 @@ everything that is actually going on when a certain snippet of your code is exec
 <p>scriptie-talkie <strong>enforces local</strong> <code>use strict</code> i.e. inside a function, but <strong>global</strong> <code>use strict</code> <strong>is only partially enforced</strong>.</p>
 <p>Basically only global strict violations that can be discovered by just parsing the code are shown and all others
 ignored:</p>
-<p>{{ scriptie: use-strict-global-working.js }}</p>
+<textarea class="scriptie-talkie">
+&#39;use strict&#39;;
+var o = { a: 1, a: 2 };
+</textarea>
+
 <p>We see a warning in the editor, and the violation is clearly indicated on the right.</p>
 <p>In the next example the assignment on line 4 does not have any effect, since scriptie-talkie does respect that the object was frozen, but the strict
 violation is ignored:</p>
-<p>{{ scriptie: use-strict-global-notworking.js }}</p>
+<textarea class="scriptie-talkie">
+&#39;use strict&#39;;
+var o = { a: 1 };
+Object.freeze(o);
+o.a = 2;
+o
+</textarea>
+
 <p>Therefore in order to make sure that <code>use strict</code> is taking effect, we wrap the questionable code inside a function and
 turn on strict mode inside it. This unfortunately has the disadvantage that  we don&#39;t see any intermediate results for
 every statement inside of the function since it is evaluated as one chunk:</p>
-<p>{{ scriptie: use-strict-local.js }}</p>
+<textarea class="scriptie-talkie">
+var o = { a: 1 };
+Object.freeze(o);
+
+function f() {
+  &#39;use strict&#39;;
+  o.a = 2;
+}
+f();
+</textarea>
+
+
 <h2 id="using-scriptie-talkie-in-your-blog">Using scriptie-talkie in your blog</h2>
 <p>It is very easy to embed scriptie-talkie code samples, like the ones here, in your blog. It comes down to simply adding
 a script tag or a dependency to your <a href="https://github.com/substack/node-browserify">browserified</a> bundle and including
@@ -113,7 +179,7 @@ your code inside of <code>&lt;textarea&gt;</code>s identified with a particular 
 scriptieTalkieEmbed();</code></pre>
 
 <h4 id="script-tag">script tag</h4>
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">script</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text/javascript"</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">"https://github.com/thlorenz/scriptie-talkie-embed/raw/gh-pages/gh-pages/bundle.js"</span>&gt;</span><span class="javascript"></span><span class="hljs-tag">&lt;/<span class="hljs-title">script</span>&gt;</span>
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">script</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text/javascript"</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">"https://raw.githubusercontent.com/thlorenz/scriptie-talkie-embed/gh-pages/gh-pages/bundle.js"</span>&gt;</span><span class="javascript"></span><span class="hljs-tag">&lt;/<span class="hljs-title">script</span>&gt;</span>
 <span class="hljs-tag">&lt;<span class="hljs-title">script</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text/javascript"</span>&gt;</span><span class="javascript">
   <span class="hljs-built_in">window</span>.scriptieTalkieEmbed();
 </span><span class="hljs-tag">&lt;/<span class="hljs-title">script</span>&gt;</span></code></pre>
@@ -154,9 +220,26 @@ of tools when either learning or debugging JavaScript. I should mention that scr
 <p>Looking forward to seeing some scriptie-talkies in your blogs!</p>
 <p>If you are interested you can look at <a href="https://github.com/thlorenz/thlorenz.com-blog/tree/master/scriptie-talkie">the source of this
 blog</a>.</p>
-<p><em>Please feel free to  ask questions and/or leave comments <a href="https://github.com/thlorenz/thlorenz.com-blog/issues/2">relating to this post</a>.</em></p>
+<script type="text/javascript" src="/js/scriptie-talkie.js"></script>
+<script type="text/javascript">
+  window.scriptieTalkieEmbed();
+</script>
 
+    <div id="disqus_thread"></div>
   </article>
+
+  <!-- discuss -->
+  <script type="text/javascript">
+    var disqus_shortname = 'thlorenz-com';
+    var disqus_title = 'Talking scriptie-talkie';
+    
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
 </body>
 </html>
 

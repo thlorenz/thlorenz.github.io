@@ -1,10 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-  <title>thlorenz.com blog</title>
+  <title>thlorenz.com The nodejs local module path trick</title>
+  <meta name="description" content="The nodejs local module path trick nodejs">
   <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
   <link rel="stylesheet" href="/css/index.css">
+  <!-- google analytics -->
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-38583213-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
 </head>
 
 <body>
@@ -18,10 +30,12 @@
       </li>
       <li><a href="/">home</a></li>
       <li><a href="/about">about</a></li>
+      <li><a href="https://github.com/thlorenz/thlorenz.com">source</a></li>
     </ul>
   </nav>
   <article class="blog-post">
     <time class="entry-date">Wed Dec 18 2013 22:00:52</time>
+    <a class="comments-link" href="#disqus_thread">Comments</a>
     <h1>The nodejs local module path trick</h1>
     <p>Sometimes you have a module installed locally that happens to have the same name as a core module. 
 As an example you may have a module called <code>util</code>.</p>
@@ -36,7 +50,21 @@ modules</a></p>
 from your local <code>node_modules</code>, but also find it if it was moved due to <code>npm dedupe</code>.</p>
 <p>And that&#39;s all there is too it.</p>
 
+    <div id="disqus_thread"></div>
   </article>
+
+  <!-- discuss -->
+  <script type="text/javascript">
+    var disqus_shortname = 'thlorenz-com';
+    var disqus_title = 'The nodejs local module path trick';
+    
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
 </body>
 </html>
 

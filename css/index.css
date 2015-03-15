@@ -14,6 +14,7 @@ body {
 a {
   color: #1863a1;
   transition: color 0.3s;
+  text-decoration: none;
 }
 
 a:visited {
@@ -37,7 +38,8 @@ a:visited {
     margin: 0;
   }
   body > article img {
-    max-width: 820px;
+    max-width: 100%;
+    padding-left: 10px;
   }
   body > nav {
     width  : 100%;
@@ -125,10 +127,21 @@ a:visited {
 }
 
 
-.blog-index,
-.blog-post {
+body > section,
+body > article {
   background: #f8f8f8 url('http://octopress.org/images/noise.png?1420306322') top left;
   border-radius: 5px;
+}
+
+.about ul {
+  list-style: none;
+}
+.about ul .push-right {
+  margin-left: 10px;
+}
+
+.about li {
+  padding: 5px;
 }
 
 .post-entry  a[rel=bookmark] {
@@ -204,4 +217,21 @@ body > nav a {
 
 body > nav ul {
   list-style: none;
+}
+
+/* scriptie-talkie */
+textarea.scriptie-talkie {
+  width: 100%;
+  visibility: hidden;
+}
+
+div.scriptie-talkie-container {
+  border: 3px solid #504D4D;
+  border-radius: 5px;
+  width: 100% !important;
+}
+
+/* disqus */
+.comments-link {
+  padding-left: 10px;
 }

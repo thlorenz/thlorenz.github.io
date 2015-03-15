@@ -1,10 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-  <title>thlorenz.com blog</title>
+  <title>thlorenz.com Viewing man pages in Vim and Preview</title>
+  <meta name="description" content="Viewing man pages in Vim and Preview unix">
   <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
   <link rel="stylesheet" href="/css/index.css">
+  <!-- google analytics -->
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-38583213-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
 </head>
 
 <body>
@@ -18,10 +30,12 @@
       </li>
       <li><a href="/">home</a></li>
       <li><a href="/about">about</a></li>
+      <li><a href="https://github.com/thlorenz/thlorenz.com">source</a></li>
     </ul>
   </nav>
   <article class="blog-post">
     <time class="entry-date">Sunday, January 26th, 2014, 9:19:49 PM</time>
+    <a class="comments-link" href="#disqus_thread">Comments</a>
     <h1>Viewing man pages in Vim and Preview</h1>
     <p>I recently came upon a collection of neat things you can do in the terminal on
 <a href="http://apple.stackexchange.com/questions/5435/got-any-tips-or-tricks-for-terminal-in-mac-os-x">stackoverflow</a>.</p>
@@ -51,9 +65,22 @@ more readable at least for my eyes, but judge for yourself.</p>
 <p>Note that the first time you use it there is a slight delay before the page is rendered, but for all uses after that it
 comes up very quickly. I guess that some plugin is installed on first run to allow rendering postscript.</p>
 <p><img src="https://raw.github.com/thlorenz/thlorenz.com-blog/master/assets/images/pman.png" alt="pman"></p>
-<p><em>Please feel free to ask questions and/or leave comments <a href="https://github.com/thlorenz/thlorenz.com-blog/issues/5">relating to this post</a>.</em></p>
 
+    <div id="disqus_thread"></div>
   </article>
+
+  <!-- discuss -->
+  <script type="text/javascript">
+    var disqus_shortname = 'thlorenz-com';
+    var disqus_title = 'Viewing man pages in Vim and Preview';
+    
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
 </body>
 </html>
 

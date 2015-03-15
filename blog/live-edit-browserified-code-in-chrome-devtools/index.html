@@ -1,10 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-  <title>thlorenz.com blog</title>
+  <title>thlorenz.com Live edit browserified code in chrome devtools</title>
+  <meta name="description" content="Live edit browserified code in chrome devtools browserify javascript chrome devtools">
   <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
   <link rel="stylesheet" href="/css/index.css">
+  <!-- google analytics -->
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-38583213-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
 </head>
 
 <body>
@@ -18,10 +30,12 @@
       </li>
       <li><a href="/">home</a></li>
       <li><a href="/about">about</a></li>
+      <li><a href="https://github.com/thlorenz/thlorenz.com">source</a></li>
     </ul>
   </nav>
   <article class="blog-post">
     <time class="entry-date">Wed Jan 29 2014 21:43:37</time>
+    <a class="comments-link" href="#disqus_thread">Comments</a>
     <h1>Live edit browserified code in chrome devtools</h1>
     <p>You may have noticed that <a href="http://remysharp.com/2012/12/21/my-workflow-never-having-to-leave-devtools/">Remy Sharp never has to leave devtools</a>, or have watched <a href="https://www.youtube.com/watch?v=kVSo4buDAEE">addy osmani improving productivity with chrome dev tools</a>.</p>
 <p>If not, you should and while you are at it read <a href="http://www.html5rocks.com/en/tutorials/developertools/revolutions2013/">chrome-devtools-revolutions</a>.</p>
@@ -43,9 +57,22 @@ and again to <a href="http://youtu.be/ODbdGAJtU38?t=2m8s">map the networked file
 </ol>
 <iframe width="640" height="480" src="//www.youtube.com/embed/ODbdGAJtU38" frameborder="0" allowfullscreen></iframe>
 
-<p><em>Please feel free to ask questions and/or leave comments <a href="https://github.com/thlorenz/thlorenz.com-blog/issues/6">relating to this post</a>.</em></p>
 
+    <div id="disqus_thread"></div>
   </article>
+
+  <!-- discuss -->
+  <script type="text/javascript">
+    var disqus_shortname = 'thlorenz-com';
+    var disqus_title = 'Live edit browserified code in chrome devtools';
+    
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
 </body>
 </html>
 

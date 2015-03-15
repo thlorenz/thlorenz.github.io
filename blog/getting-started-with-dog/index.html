@@ -1,10 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-  <title>thlorenz.com blog</title>
+  <title>thlorenz.com Getting started with dog</title>
+  <meta name="description" content="Getting started with dog dog tutorial nodejs">
   <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
   <link rel="stylesheet" href="/css/index.css">
+  <!-- google analytics -->
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-38583213-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
 </head>
 
 <body>
@@ -18,10 +30,12 @@
       </li>
       <li><a href="/">home</a></li>
       <li><a href="/about">about</a></li>
+      <li><a href="https://github.com/thlorenz/thlorenz.com">source</a></li>
     </ul>
   </nav>
   <article class="blog-post">
     <time class="entry-date">Sun Sep 16 2012 11:54:37</time>
+    <a class="comments-link" href="#disqus_thread">Comments</a>
     <h1>Getting started with dog</h1>
     <p><a href="http://github.com/thlorenz/dog">Dog</a> is a markdown based blogging engine, powered by nodejs.</p>
 <p>This post will give a quick introduction on dog and why I wrote it, followed by a tutorial on how to create, publish and
@@ -352,7 +366,21 @@ it.</p>
 repository</a> in order to find more information.</p>
 <p>In case you find errors or have issues with dog, feel free to <a href="https://github.com/thlorenz/dog/issues">raise an issue</a>.</p>
 
+    <div id="disqus_thread"></div>
   </article>
+
+  <!-- discuss -->
+  <script type="text/javascript">
+    var disqus_shortname = 'thlorenz-com';
+    var disqus_title = 'Getting started with dog';
+    
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
 </body>
 </html>
 
