@@ -52,17 +52,17 @@ story) and after trying twice to hackintosh it, I installed Ubuntu. So I figured
 code which was leaking memory allover the place.</p>
 <p>I tried a few different options and list them here for reference along with the reason why they didn&#39;t cut it for me,
 followed by the final option which worked just perfect.</p>
-<h3 id="-ssh-into-the-linux-machine-and-develop-and-test-there-entirely-ok-"><code>ssh</code> into the Linux Machine and develop and test there entirely -&gt; <em>ok</em></h3>
+<h3 id="ssh-into-the-linux-machine-and-develop-and-test-there-entirely-ok"><code>ssh</code> into the Linux Machine and develop and test there entirely -&gt; <em>ok</em></h3>
 <p>That works nicely if you can live with the slight delay between typing and the result appearing in your editor. Not
 an option for me</p>
-<h3 id="remote-edit-files-with-vim-ok-">Remote Edit Files with Vim -&gt; <em>ok</em></h3>
+<h3 id="remote-edit-files-with-vim-ok">Remote Edit Files with Vim -&gt; <em>ok</em></h3>
 <p>This is an <a href="http://vim.wikia.com/wiki/Editing_remote_files_via_scp_in_vim">ok option</a>, but has the disadvantage that you
 have no context since the file you are editing actually gets <code>scp</code>d into your local <code>tmp</code> dir and back to the remote
 machine every time you save. Therefore there is no way to quickly see/open related files either with <code>Ctrl-P</code> or
 <code>NERDTree</code>.</p>
 <p>Additionally it is annoying that the local files of your project keep going out of sync with the ones on your remote
 machine.</p>
-<h3 id="-rsync-your-project-valgrind-it-via-a-simple-make-target-perfect-"><code>rsync</code> your project <code>valgrind</code> it via a simple <code>make</code> target -&gt; <em>perfect</em></h3>
+<h3 id="rsync-your-project-valgrind-it-via-a-simple-make-target-perfect"><code>rsync</code> your project <code>valgrind</code> it via a simple <code>make</code> target -&gt; <em>perfect</em></h3>
 <p>Now this worked just perfect for me. Here is the gist:</p>
 <ul>
 <li>create an <code>rsync</code> make target which copies all needed files to your remote machine - we use <code>rsync</code> because <code>scp</code>

@@ -72,7 +72,7 @@ npm install
 <p>This has the advantage that they can be used separately and/or swapped out as needed.</p>
 <p>In order to understand the <a href="https://github.com/dominictarr/event-stream">event-stream module</a> we need to look at them
 first.</p>
-<h3 id="-through-https-github-com-dominictarr-through-"><a href="https://github.com/dominictarr/through">through</a></h3>
+<h3 id="through"><a href="https://github.com/dominictarr/through">through</a></h3>
 <ul>
 <li>shortcut to create duplex stream</li>
 <li>handles pause and resume</li>
@@ -87,7 +87,7 @@ first.</p>
 <li><code>this.queue(null)</code> will emit <code>&#39;end&#39;</code></li>
 <li><code>drain</code> emits all <code>&#39;data&#39;</code> in the buffer and finally <code>&#39;end&#39;</code></li>
 </ul>
-<h3 id="-split-https-github-com-dominictarr-split-blob-master-package-json-"><a href="https://github.com/dominictarr/split/blob/master/package.json">split</a></h3>
+<h3 id="split"><a href="https://github.com/dominictarr/split/blob/master/package.json">split</a></h3>
 <ul>
 <li>splits the upstream data into chunks and emits them separately</li>
 </ul>
@@ -154,7 +154,7 @@ fs.createReadStream(__filename, { encoding: <span class="hljs-string">'utf-8'</s
 <span class="hljs-string">chars:</span> <span class="hljs-number">24</span>   .pipe(process.stdout);
 total <span class="hljs-string">lines:</span> <span class="hljs-number">25</span> | non empty <span class="hljs-string">lines:</span> <span class="hljs-number">22</span></code></pre>
 
-<h3 id="-map-stream-https-github-com-dominictarr-map-stream-"><a href="https://github.com/dominictarr/map-stream">map-stream</a></h3>
+<h3 id="map-stream"><a href="https://github.com/dominictarr/map-stream">map-stream</a></h3>
 <ul>
 <li>takes an asnynchronous function and turns it into a through stream</li>
 <li>the async function has this signature: <code>function (data, callback) { .. }</code></li>
@@ -220,7 +220,7 @@ chars: <span class="hljs-number">63</span>          cb(<span class="hljs-literal
 <span class="hljs-string">chars:</span> <span class="hljs-number">16</span>      .pipe(count())
 <span class="hljs-string">chars:</span> <span class="hljs-number">24</span>      .pipe(process.stdout);</code></pre>
 
-<h3 id="-duplexer-https-github-com-raynos-duplexer-"><a href="https://github.com/Raynos/duplexer">duplexer</a></h3>
+<h3 id="duplexer"><a href="https://github.com/Raynos/duplexer">duplexer</a></h3>
 <ul>
 <li><code>duplex (writeStream, readStream)</code></li>
 <li>creates a duplex (readable and writable) stream from two streams, one of which is <code>readable</code> and the other being
@@ -234,7 +234,7 @@ chars: <span class="hljs-number">63</span>          cb(<span class="hljs-literal
 <li>proxies <code>writable</code> and <code>readable</code> properties to the appropriate streams</li>
 <li>reemits errors of both streams via the new stream</li>
 </ul>
-<h3 id="-pause-stream-https-github-com-dominictarr-pause-stream-"><a href="https://github.com/dominictarr/pause-stream">pause-stream</a></h3>
+<h3 id="pause-stream"><a href="https://github.com/dominictarr/pause-stream">pause-stream</a></h3>
 <ul>
 <li>fixes badly behaved streams, that don&#39;t pause/resume correctly</li>
 <li>strictly buffers when paused because either:<ul>
@@ -246,7 +246,7 @@ chars: <span class="hljs-number">63</span>          cb(<span class="hljs-literal
 <li>when stream is resumed or downstream emits <code>&#39;drain&#39;</code> the underlying buffer is drained and its data <code>emit</code>ted
 downstream</li>
 </ul>
-<h3 id="-from-https-github-com-dominictarr-from-blob-master-readme-markdown-"><a href="https://github.com/dominictarr/from/blob/master/readme.markdown">from</a></h3>
+<h3 id="from"><a href="https://github.com/dominictarr/from/blob/master/readme.markdown">from</a></h3>
 <p>This module is neither used nor documented inside <a href="https://github.com/dominictarr/event-stream">event-stream</a>.</p>
 <p>I only include it here for completeness&#39; sake.</p>
 <ul>
@@ -260,11 +260,11 @@ downstream</li>
 </li>
 <li>optionally takes Array of chunks which will be piped throught the stream synchronously</li>
 </ul>
-<h2 id="-event-stream-https-github-com-dominictarr-event-stream-"><a href="https://github.com/dominictarr/event-stream">event-stream</a></h2>
+<h2 id="event-stream"><a href="https://github.com/dominictarr/event-stream">event-stream</a></h2>
 <p>Exposes all functions from the modules described above.</p>
 <p>It also introduces additional functions. Some of those are implemented using the above described module functions as
 building blocks.</p>
-<h3 id="-mapsync-https-github-com-dominictarr-event-stream-mapsync-syncfunction-"><a href="https://github.com/dominictarr/event-stream#mapsync-syncfunction">mapSync</a></h3>
+<h3 id="mapsync"><a href="https://github.com/dominictarr/event-stream#mapsync-syncfunction">mapSync</a></h3>
 <ul>
 <li>same as <a href="https://github.com/dominictarr/map-stream">map-stream</a>, but callback is called synchronously and the given
 function returns the result instead of calling back with it</li>
@@ -299,7 +299,7 @@ fs.createReadStream(__filename, { encoding: <span class="hljs-string">'utf-8'</s
   .pipe(process.stdout);</code></pre>
 
 <h3 id="array-string-operations">Array/String operations</h3>
-<h3 id="-join-https-github-com-dominictarr-event-stream-join-seperator-"><a href="https://github.com/dominictarr/event-stream#join-seperator">join</a></h3>
+<h3 id="join"><a href="https://github.com/dominictarr/event-stream#join-seperator">join</a></h3>
 <ul>
 <li>emits a separator between each chunk of data (similar to <code>Array.join</code>)</li>
 </ul>
@@ -332,7 +332,7 @@ var join  =  require('event-stream').join
   , fs    =  require('fs');
 [..]</code></pre>
 
-<h3 id="-replace-https-github-com-dominictarr-event-stream-replace-from-to-"><a href="https://github.com/dominictarr/event-stream#replace-from-to">replace</a></h3>
+<h3 id="replace"><a href="https://github.com/dominictarr/event-stream#replace-from-to">replace</a></h3>
 <ul>
 <li>takes <code>from</code> (<code>String</code> or <code>RegExp</code>) and <code>to</code> argument and replaces <code>from</code> with <code>to</code></li>
 </ul>
@@ -350,7 +350,7 @@ fs.createReadStream(__filename, { encoding: <span class="hljs-string">'utf-8'</s
   .pipe(process.stdout);</code></pre>
 
 <h3 id="json-converters">JSON converters</h3>
-<h3 id="-parse-https-github-com-dominictarr-event-stream-parse-"><a href="https://github.com/dominictarr/event-stream#parse">parse</a></h3>
+<h3 id="parse"><a href="https://github.com/dominictarr/event-stream#parse">parse</a></h3>
 <ul>
 <li>parses JSON chunks </li>
 </ul>
@@ -359,7 +359,7 @@ fs.createReadStream(__filename, { encoding: <span class="hljs-string">'utf-8'</s
 <li>intercepts the stream using <a href="https://github.com/dominictarr/through">through</a></li>
 <li>converts <code>data</code> string to a JavaScript object via <code>JSON.parse</code> and <code>stream.emit</code>s it</li>
 </ul>
-<h3 id="-stringify-https-github-com-dominictarr-event-stream-stringify-"><a href="https://github.com/dominictarr/event-stream#stringify">stringify</a></h3>
+<h3 id="stringify"><a href="https://github.com/dominictarr/event-stream#stringify">stringify</a></h3>
 <ul>
 <li>converts JavaScript objects to a <code>String</code></li>
 <li>works in tandem with <code>parse</code> and therefore escapes whitespace and terminates each object with <code>&#39;\n&#39;</code></li>
@@ -435,7 +435,7 @@ objectStream()
 
 <span class="hljs-keyword">{</span><span class="hljs-string">"id"</span>:<span class="hljs-string">"0002"</span>,<span class="hljs-string">"created"</span>:<span class="hljs-string">"2012-10-01T12:10:13.950Z"</span><span class="hljs-keyword">}</span></code></pre>
 
-<h3 id="-readable-https-github-com-dominictarr-event-stream-readable-asyncfunction-"><a href="https://github.com/dominictarr/event-stream#readable-asyncfunction">readable</a></h3>
+<h3 id="readable"><a href="https://github.com/dominictarr/event-stream#readable-asyncfunction">readable</a></h3>
 <ul>
 <li>creates a <code>readable</code> stream from an async function</li>
 <li>that stream respects <code>pause</code></li>
@@ -515,7 +515,7 @@ es.readable(threeCubes)
 <span class="hljs-number">8</span>
 <span class="hljs-string">"OK"</span></code></pre>
 
-<h3 id="-readarray-https-github-com-dominictarr-event-stream-readarray-array-"><a href="https://github.com/dominictarr/event-stream#readarray-array">readArray</a></h3>
+<h3 id="readarray"><a href="https://github.com/dominictarr/event-stream#readarray-array">readArray</a></h3>
 <ul>
 <li>creates a <code>readable</code> stream from an Array</li>
 <li>each item is piped separately downstream</li>
@@ -528,7 +528,7 @@ es.readable(threeCubes)
 <li>in case the iteration was interrupted the stream a continuous attempt to resume the stream is made
 (<code>process.nextTick</code>)</li>
 </ul>
-<h3 id="-writearray-https-github-com-dominictarr-event-stream-writearray-callback-"><a href="https://github.com/dominictarr/event-stream#writearray-callback">writeArray</a></h3>
+<h3 id="writearray"><a href="https://github.com/dominictarr/event-stream#writearray-callback">writeArray</a></h3>
 <ul>
 <li>creates a <code>writable</code> stream from a callback</li>
 <li>when the upstream ends, the callback is invoked with an array into which the emitted items were buffered</li>
@@ -569,7 +569,7 @@ es.readArray([<span class="hljs-number">0</span>, <span class="hljs-number">1</s
 <pre><code>➝  node <span class="hljs-built_in">read</span>Array
 OK</code></pre>
 
-<h3 id="-child-https-github-com-dominictarr-event-stream-child-child_process-"><a href="https://github.com/dominictarr/event-stream#child-child_process">child</a></h3>
+<h3 id="child"><a href="https://github.com/dominictarr/event-stream#child-child_process">child</a></h3>
 <ul>
 <li>creates a through stream from a child process</li>
 </ul>
@@ -593,7 +593,7 @@ fs.createReadStream(__filename)
 fs.<span class="hljs-function"><span class="hljs-title">createReadStream</span><span class="hljs-params">(__filename)</span></span>
   .<span class="hljs-function"><span class="hljs-title">pipe</span><span class="hljs-params">(es.child(cp.exec(<span class="hljs-string">'grep Stream'</span>)</span></span>))</code></pre>
 
-<h3 id="-wait-https-github-com-dominictarr-event-stream-wait-callback-"><a href="https://github.com/dominictarr/event-stream#wait-callback">wait</a></h3>
+<h3 id="wait"><a href="https://github.com/dominictarr/event-stream#wait-callback">wait</a></h3>
 <ul>
 <li>aggregates <code>emit</code>ted chunks of a stream into a single string and <code>emit</code>s it when the stream <code>end</code>s</li>
 <li>optionally also invokes a callback with the final string</li>
@@ -616,7 +616,7 @@ es.readArray([ <span class="hljs-string">'e'</span>, <span class="hljs-string">'
 
 <h5 id="output-">Output:</h5>
 <p>I leave this one to the reader to find out :)</p>
-<h3 id="-pipeline-https-github-com-dominictarr-event-stream-pipeline-stream1streamn-"><a href="https://github.com/dominictarr/event-stream#pipeline-stream1streamn">pipeline</a></h3>
+<h3 id="pipeline"><a href="https://github.com/dominictarr/event-stream#pipeline-stream1streamn">pipeline</a></h3>
 <ul>
 <li>turns multiple streams into a single stream which writes to the first stream and reads from the last</li>
 <li><code>pipeline(s1, s2, s3)</code> is syntactic sugar for <code>s1.pipe(s2).pipe(s3)</code> </li>
