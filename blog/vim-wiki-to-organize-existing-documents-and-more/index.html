@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>thlorenz.com vim wiki to organize existing documents and more</title>
+  <meta name="description" content="vim wiki to organize existing documents and more vim">
+  <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/monokai_sublime.css">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <link rel="stylesheet" href="/css/index.css">
+  <!-- google analytics -->
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-38583213-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</head>
+
+<body>
+  <nav class="sidebar">
+    <ul>
+      <li>
+        <h3>Thorsten Lorenz</h3>
+      </li>
+      <li>
+        <img alt="avatar" src="https://avatars3.githubusercontent.com/u/192891?v=3&s=460">
+      </li>
+      <li><a href="/">home</a></li>
+      <li><a href="/thanks.html">thanks</a></li>
+      <li><a href="/about.html">about</a></li>
+      <li><a href="https://github.com/thlorenz/thlorenz.com">source</a></li>
+    </ul>
+  </nav>
+  <article class="blog-post">
+    <time class="entry-date">Sun Jan 17 2021 17:03:22</time>
+    <a class="comments-link" href="#disqus_thread">Comments</a>
+    <h1>vim wiki to organize existing documents and more</h1>
+    <h2 id="discovering-vimwiki">Discovering Vimwiki</h2>
+<p>Today was another of those weekend days where I start out on a project I wanted to continue on
+and magically discover some vim feature which I then have to follow all the way into the rabbit
+hole. Today one of those was <a href="https://github.com/vimwiki/vimwiki">vimwiki</a>.</p>
+<p>As a background a made a short foray into trying to use Emacs since I was unhappy how vim
+plugins foro language support worked. After a while I realized that Emacs plugins don&#39;t work
+much better and instead tweaked my vim setup to get better results. However while on that short
+journey I discovered <a href="https://orgmode.org/">org mode</a> which I found super useful to organize
+project research, todos and more. Naturally after switching back to vim I missed it a bit and
+didn&#39;t immediately find a replacement.</p>
+<p>Today when I saw <a href="https://github.com/vimwiki/vimwiki">vimwiki</a> I realized that it is featured
+enough to at least organize project todos, research with interlinked documents and possibly
+even a diary to note misc things to find them later.</p>
+<h2 id="connecting-vimwiki-to-existing-organized-documents">Connecting Vimwiki to existing organized Documents</h2>
+<p>Since I already have a repo for this blog and a <a href="https://github.com/thlorenz/dox">dox</a> repo I figured out a way to link those instead
+recreating or copying them in vimwiki.</p>
+<p>My current vimwiki folder structure looks like this:</p>
+<pre><code>.
+├── blog -&gt; /Users/thlorenz/dev/thlorenz/thlorenz.com/src/blog
+├── diary
+│   ├── <span class="hljs-number">2021</span>-<span class="hljs-number">01</span>-<span class="hljs-number">17</span><span class="hljs-class">.md</span>
+│   └── diary<span class="hljs-class">.md</span>
+├── dox -&gt; /Users/thlorenz/dev/misc/dox
+├── index<span class="hljs-class">.md</span>
+└── projects
+    └── rust.md</code></pre>
+
+<p>I then include links into dox and blog entries inside the main index page so that I can quickly
+jump back and forth, as an example here are some links into the dox repo.</p>
+<pre><code class="hljs md"><span class="hljs-header">### Admin</span>
+
+<span class="hljs-bullet">- </span>[<span class="hljs-link_label">bash</span>](<span class="hljs-link_url">dox/admin/bash.md</span>)
+<span class="hljs-bullet">- </span>[<span class="hljs-link_label">dtrace</span>](<span class="hljs-link_url">dox/admin/dtrace.md</span>)
+<span class="hljs-bullet">- </span>[<span class="hljs-link_label">firewall</span>](<span class="hljs-link_url">dox/admin/firewall.md</span>)</code></pre>
+
+<p>Those links are concealed, so that I only see <code>bash</code> for instance and can hit <code>&lt;Enter&gt;</code> when my
+cursor is on top in order to navigate there. <code>&lt;Ctrl-o&gt;</code> gets me back to where I was.</p>
+<p>As I understand each of those can be <em>suborganized</em> by adding an <code>index.md</code> in its root as
+vimwiki treats each as a <em>subwiki</em> which can be listed via <code>&lt;leader&gt; ws</code>.</p>
+<h2 id="tweaking-the-markdown-plugin-and-instant-markdown-preview">Tweaking the Markdown Plugin and Instant Markdown Preview</h2>
+<p>When opening a <code>set ft=vimwiki</code> document (which is set when opening a vimwiki file via one of
+the provided shortcuts), some extra features are activated, i.e. code blocks are highlighted
+and clicking on a link navigates to the local file or opens it in the browser if it is a URL.</p>
+<p>It also <em>conceals</em> those links.  Editing those <em>concealed</em> links is hard as you cannot easily
+move the cursor inside the actual link in normal mode. Therefore I recommend you to add a quick
+option to toggle the markdown <code>conceallevel</code>. To this end I added the following to my <code>.vimrc</code>.</p>
+<pre><code class="hljs vim">au FileType markdown,vimwiki noremap &lt;leader&gt;mc :call ToggleConcealLevel()&lt;CR&gt;
+function! ToggleConcealLevel()
+    if &amp;conceallevel
+        setlocal conceallevel=0
+    else
+        setlocal conceallevel=2
+    endif
+endfunction</code></pre>
+
+<p>To quickly preview the markdown entry/post I&#39;m writing I added a shortcut to launch it and
+disabled it auto-launching when I open a markdown file.</p>
+<p>Here&#39;s my <code>instant-markdown</code> <em>plug</em> with those settings.</p>
+<pre><code class="hljs vim">Plug 'instant-markdown/vim-instant-markdown', {'for': 'markdown', 'do': 'npm -g install instant-markdown-d'}
+  let g:instant_markdown_autostart = 0
+  au FileType markdown,vimwiki nnoremap &lt;leader&gt;md :InstantMarkdownPreview&lt;CR&gt;</code></pre>
+
+<h2 id="en-fin">En Fin</h2>
+<p>There are logs more blog posts and YouTube videos about vimwiki so I&#39;m not going to detail how
+to navigate and such here, instead I&#39;ll just link <a href="http://thedarnedestthing.com/vimwiki%20cheatsheet">this cheatsheet</a> which I found very useful
+and encourage you to give it a try. For the impatient here&#39;s my <code>vimwiki</code> <em>plug</em> inside my
+<code>.vimrc</code> which sets <em>markdown</em> as the default format and remaps the shortcut to toggle a list todo item.</p>
+<pre><code class="hljs vim">Plug 'vimwiki/vimwiki'
+  let g:vimwiki_list = [{'path': '~/.wiki', 'syntax': 'markdown', 'ext': '.md'}]
+  au FileType vimwiki nmap &lt;leader&gt;tl &lt;Plug&gt;VimwikiToggleListItem
+  au FileType vimwiki vmap &lt;leader&gt;tl &lt;Plug&gt;VimwikiToggleListItem</code></pre>
+
+<pre><code class="hljs rust"><span class="hljs-function"><span class="hljs-keyword">fn</span> <span class="hljs-title">main</span></span>() {
+  printf!(<span class="hljs-string">"hello world"</span>);
+}</code></pre>
+    <div id="disqus_thread"></div>
+  </article>
+
+  <!-- discuss -->
+  <script type="text/javascript">
+    var disqus_shortname = 'thlorenz-com';
+    var disqus_title = 'vim wiki to organize existing documents and more';
+    
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</body>
+</html>
+
+<!--
+vim: ft=handlebars
+-->
