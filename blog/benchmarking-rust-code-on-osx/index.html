@@ -40,23 +40,28 @@
     <h1>Benchmarking Rust Code on OSX</h1>
     <p>Today I went through the rust wasm tutorial and learned a bunch especially regarding performance
 via <a href="https://rustwasm.github.io/docs/book/game-of-life/time-profiling.html">this section</a>.</p>
-<p>For benchmarking they use <code>perf</code> after <code>cargo bench</code> to visualize, but I discovered <a href="https://github.com/cmyr/cargo-instruments">cargo
-instruments</a>  as well as <a href="https://github.com/flamegraph-rs/flamegraph">rust
-flamegraph</a> which worked a bit better to just find
-bottlenecks.</p>
+<p>This tutorial explains benchmarking using browser tools like <code>console.time</code>, but I&#39;ll focus on
+the lower level benchmarking part here.</p>
+<p>The author uses <code>perf</code> after <code>cargo bench</code> to visualize which doesn&#39;t exist on OSX, but I
+discovered <a href="https://github.com/cmyr/cargo-instruments">cargo instruments</a>  as well as <a href="https://github.com/flamegraph-rs/flamegraph">rust
+flamegraph</a>. The latter worked a bit better to
+just find bottlenecks.</p>
 <h2 id="cargo-instruments">cargo instruments</h2>
-<p>Had to install via <code>brew install cargo-instruments</code> as it didn&#39;t build with cargo.</p>
-<p>List all <em>templates</em> via <code>cargo instruments --list</code>.</p>
+<p>I had to install this tool via <code>brew install cargo-instruments</code> as it didn&#39;t build with cargo.</p>
+<p>You can list all available <em>templates</em> via <code>cargo instruments --list</code>.</p>
 <p>Assuming a <code>/benches/bench.rs</code>, a typical run through would be: </p>
-<p><em>Note</em>: <code>time</code> template did not result in any data showing in <em>Instruments</em>, but <code>alloc</code> and
-<code>sys</code> did show some data.</p>
 <pre><code class="hljs sh">cargo instruments -t alloc --bench bench
 open target/instruments/my_bin_YYYY-MM-DD-THH:MM:SS.trace</code></pre>
 
-<p><em>Make sure to scroll down to see the app in some cases.</em></p>
+<p><em>Note</em>: <code>time</code> template did not result in any data showing in <em>Instruments</em>, but <code>alloc</code> and
+<code>sys</code> did show some data which is why I am using the former for this example even though it
+actually measures memory allocations instead of CPU usage and timing.</p>
+<p><em>Once in the Instruments UI make sure to scroll down to see the app in some cases.</em></p>
 <h2 id="rust-flamegraphs">rust flamegraphs</h2>
-<p>However in the <a href="https://www.reddit.com/r/rust/comments/b20eca/introducing_cargoinstruments_zerohassle_profiling/">same redit thread</a> they mentioned <a href="https://github.com/flamegraph-rs/flamegraph">rust
-flamegraph</a> which I then tried.</p>
+<p>However in the <a href="https://www.reddit.com/r/rust/comments/b20eca/introducing_cargoinstruments_zerohassle_profiling/">same redit
+thread</a>
+<a href="https://github.com/flamegraph-rs/flamegraph">rust flamegraph</a> was mentioned which I then
+tried.</p>
 <pre><code class="hljs sh">cargo install flamegraph</code></pre>
 
 <p>Add this to <code>Cargo.toml</code> to get better symbols in the flamegraph.</p>
@@ -71,7 +76,7 @@ flamegraph</a> which I then tried.</p>
 
 <h3 id="cleanup">Cleanup</h3>
 <p>Unfortunately after running with <code>sudo</code> you end up with a file in your
-<code>target/release/.fingerprint</code> folder which give permission problems. It&#39;ll look something like
+<code>target/release/.fingerprint</code> folder which causes permission problems later. It&#39;ll look something like
 this.</p>
 <pre><code class="hljs">drwxr-xr-x   <span class="hljs-number">7</span> <span class="hljs-keyword">user</span>      admin   <span class="hljs-number">224</span>B <span class="hljs-constant">Jan</span> <span class="hljs-number">30</span> <span class="hljs-number">14</span>:<span class="hljs-number">05</span> <span class="hljs-literal">project</span>-<span class="hljs-literal">name</span>-<span class="hljs-number">5063881</span>d9843ce56/
 drwxr-xr-x   <span class="hljs-number">7</span> <span class="hljs-literal">root</span>      admin   <span class="hljs-number">224</span>B <span class="hljs-constant">Jan</span> <span class="hljs-number">30</span> <span class="hljs-number">14</span>:<span class="hljs-number">26</span> <span class="hljs-literal">project</span>-<span class="hljs-literal">name</span>-<span class="hljs-number">58809</span>faea7027018/</code></pre>
@@ -82,15 +87,19 @@ before cargo is happy again.</p>
 <p>So in the end I just did <code>sudo rm -rf target/</code> to clean things up in one go. However that
 incurred a recompile so improvement is possible here.</p>
 <h2 id="bench-compare">bench compare</h2>
-<p>Back to the tutorial if we don&#39;t need to see visualizations but just compare benchmarks after a
+<p>Back to the tutorial, if we don&#39;t need to see visualizations but just compare benchmarks after a
 chnage we&#39;d proceed as follows.</p>
+<p>Install the tool:</p>
+<pre><code class="hljs sh">cargo install cargo-benchcmp</code></pre>
+
+<p>Then proceed:</p>
 <pre><code class="hljs sh">cargo bench | tee before.txt
 
- Make changes you think imporve perf
+<span class="hljs-comment"># Make changes you think imporve perf</span>
 
 cargo bench | tee after.txt</code></pre>
 
-<p>When you have that perf data just run the following to get a summary of differences.</p>
+<p>Once you have that perf data just run the following to get a summary of differences.</p>
 <pre><code class="hljs sh">cargo benchcmp before.txt after.txt</code></pre>
 
 <p>It&#39;ll look something like the below and in this case shows a 10x speedup.</p>
