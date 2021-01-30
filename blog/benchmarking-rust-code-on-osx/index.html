@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>thlorenz.com Benchmarking Rust Code on OSX</title>
+  <meta name="description" content="Benchmarking Rust Code on OSX rust, perf">
+  <link rel="stylesheet" href="https://highlightjs.org/static/demo/styles/github-gist.css">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <link rel="stylesheet" href="/css/index.css">
+  <!-- google analytics -->
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-38583213-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</head>
+
+<body>
+  <nav class="sidebar">
+    <ul>
+      <li>
+        <h3>Thorsten Lorenz</h3>
+      </li>
+      <li>
+        <img alt="avatar" src="https://avatars3.githubusercontent.com/u/192891?v=3&s=460">
+      </li>
+      <li><a href="/">home</a></li>
+      <li><a href="/thanks.html">thanks</a></li>
+      <li><a href="/about.html">about</a></li>
+      <li><a href="https://github.com/thlorenz/thlorenz.com">source</a></li>
+    </ul>
+  </nav>
+  <article class="blog-post">
+    <time class="entry-date">Sat Jan 30 2021 14:51:38</time>
+    <a class="comments-link" href="#disqus_thread">Comments</a>
+    <h1>Benchmarking Rust Code on OSX</h1>
+    <p>Today I went through the rust wasm tutorial and learned a bunch especially regarding performance
+via <a href="https://rustwasm.github.io/docs/book/game-of-life/time-profiling.html">this section</a>.</p>
+<p>For benchmarking they use <code>perf</code> after <code>cargo bench</code> to visualize, but I discovered <a href="https://github.com/cmyr/cargo-instruments">cargo
+instruments</a>  as well as <a href="https://github.com/flamegraph-rs/flamegraph">rust
+flamegraph</a> which worked a bit better to just find
+bottlenecks.</p>
+<h2 id="cargo-instruments">cargo instruments</h2>
+<p>Had to install via <code>brew install cargo-instruments</code> as it didn&#39;t build with cargo.</p>
+<p>List all <em>templates</em> via <code>cargo instruments --list</code>.</p>
+<p>Assuming a <code>/benches/bench.rs</code>, a typical run through would be: </p>
+<p><em>Note</em>: <code>time</code> template did not result in any data showing in <em>Instruments</em>, but <code>alloc</code> and
+<code>sys</code> did show some data.</p>
+<pre><code class="hljs sh">cargo instruments -t alloc --bench bench
+open target/instruments/my_bin_YYYY-MM-DD-THH:MM:SS.trace</code></pre>
+
+<p><em>Make sure to scroll down to see the app in some cases.</em></p>
+<h2 id="rust-flamegraphs">rust flamegraphs</h2>
+<p>However in the <a href="https://www.reddit.com/r/rust/comments/b20eca/introducing_cargoinstruments_zerohassle_profiling/">same redit thread</a> they mentioned <a href="https://github.com/flamegraph-rs/flamegraph">rust
+flamegraph</a> which I then tried.</p>
+<pre><code class="hljs sh">cargo install flamegraph</code></pre>
+
+<p>Add this to <code>Cargo.toml</code> to get better symbols in the flamegraph.</p>
+<pre><code><span class="hljs-title">[profile.bench]</span>
+<span class="hljs-setting">debug = <span class="hljs-value"><span class="hljs-keyword">true</span></span></span></code></pre>
+
+<p>Run the below. <code>sudo</code> is necesary to usd <em>dtrace</em> properly.</p>
+<pre><code class="hljs sh"><span class="hljs-built_in">sudo</span> cargo flamegraph --bench bench</code></pre>
+
+<p>Then open the flamegraph.</p>
+<pre><code class="hljs sh">open flamegraph.svg</code></pre>
+
+<h3 id="cleanup">Cleanup</h3>
+<p>Unfortunately after running with <code>sudo</code> you end up with a file in your
+<code>target/release/.fingerprint</code> folder which give permission problems. It&#39;ll look something like
+this.</p>
+<pre><code class="hljs">drwxr-xr-x   <span class="hljs-number">7</span> <span class="hljs-keyword">user</span>      admin   <span class="hljs-number">224</span>B <span class="hljs-constant">Jan</span> <span class="hljs-number">30</span> <span class="hljs-number">14</span>:<span class="hljs-number">05</span> <span class="hljs-literal">project</span>-<span class="hljs-literal">name</span>-<span class="hljs-number">5063881</span>d9843ce56/
+drwxr-xr-x   <span class="hljs-number">7</span> <span class="hljs-literal">root</span>      admin   <span class="hljs-number">224</span>B <span class="hljs-constant">Jan</span> <span class="hljs-number">30</span> <span class="hljs-number">14</span>:<span class="hljs-number">26</span> <span class="hljs-literal">project</span>-<span class="hljs-literal">name</span>-<span class="hljs-number">58809</span>faea7027018/</code></pre>
+
+<p>As you can see the second one is only accessible via <code>root</code> and you need to manually remove it
+before cargo is happy again.</p>
+<p>However another one like this exists, i.e. <code>/target/release/deps/bench-&lt;some-id&gt;.d</code>.</p>
+<p>So in the end I just did <code>sudo rm -rf target/</code> to clean things up in one go. However that
+incurred a recompile so improvement is possible here.</p>
+<h2 id="bench-compare">bench compare</h2>
+<p>Back to the tutorial if we don&#39;t need to see visualizations but just compare benchmarks after a
+chnage we&#39;d proceed as follows.</p>
+<pre><code class="hljs sh">cargo bench | tee before.txt
+
+ Make changes you think imporve perf
+
+cargo bench | tee after.txt</code></pre>
+
+<p>When you have that perf data just run the following to get a summary of differences.</p>
+<pre><code class="hljs sh">cargo benchcmp before.txt after.txt</code></pre>
+
+<p>It&#39;ll look something like the below and in this case shows a 10x speedup.</p>
+<pre><code class="hljs">name            before<span class="hljs-class">.txt</span> ns/iter  after<span class="hljs-class">.txt</span> ns/iter  diff ns/iter   diff %  speedup
+universe_ticks  <span class="hljs-number">862</span>,<span class="hljs-number">931</span>             <span class="hljs-number">82</span>,<span class="hljs-number">187</span>                 -<span class="hljs-number">780</span>,<span class="hljs-number">744</span>  -<span class="hljs-number">90.48%</span>  x <span class="hljs-number">10.50</span></code></pre>
+    <div id="disqus_thread"></div>
+  </article>
+
+  <!-- discuss -->
+  <script type="text/javascript">
+    var disqus_shortname = 'thlorenz-com';
+    var disqus_title = 'Benchmarking Rust Code on OSX';
+    
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</body>
+</html>
+
+<!--
+vim: ft=handlebars
+-->

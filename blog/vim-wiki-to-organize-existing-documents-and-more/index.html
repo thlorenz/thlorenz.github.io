@@ -67,7 +67,7 @@ recreating or copying them in vimwiki.</p>
 
 <p>I then include links into dox and blog entries inside the main index page so that I can quickly
 jump back and forth, as an example here are some links into the dox repo.</p>
-<pre><code class="hljs md"><span class="hljs-header">### Admin</span>
+<pre><code class="hljs markdown"><span class="hljs-header">### Admin</span>
 
 <span class="hljs-bullet">- </span>[<span class="hljs-link_label">bash</span>](<span class="hljs-link_url">dox/admin/bash.md</span>)
 <span class="hljs-bullet">- </span>[<span class="hljs-link_label">dtrace</span>](<span class="hljs-link_url">dox/admin/dtrace.md</span>)
@@ -84,14 +84,14 @@ and clicking on a link navigates to the local file or opens it in the browser if
 <p>It also <em>conceals</em> those links.  Editing those <em>concealed</em> links is hard as you cannot easily
 move the cursor inside the actual link in normal mode. Therefore I recommend you to add a quick
 option to toggle the markdown <code>conceallevel</code>. To this end I added the following to my <code>.vimrc</code>.</p>
-<pre><code class="hljs vim">au FileType markdown,vimwiki noremap &lt;leader&gt;mc :call ToggleConcealLevel()&lt;CR&gt;
-function! ToggleConcealLevel()
-    if &amp;conceallevel
-        setlocal conceallevel=0
-    else
-        setlocal conceallevel=2
+<pre><code>au FileType markdown,vimwiki noremap &lt;leader&gt;mc :call ToggleConcealLevel()&lt;CR&gt;
+<span class="hljs-function"><span class="hljs-keyword">function</span>! <span class="hljs-title">ToggleConcealLevel</span><span class="hljs-params">()</span></span>
+    <span class="hljs-keyword">if</span> &amp;conceallevel
+        setlocal conceallevel=<span class="hljs-number">0</span>
+    <span class="hljs-keyword">else</span>
+        setlocal conceallevel=<span class="hljs-number">2</span>
     endif
-endfunction</code></pre>
+<span class="hljs-function"><span class="hljs-keyword">endfunction</span></span></code></pre>
 
 <p>To quickly preview the markdown entry/post I&#39;m writing I added a shortcut to launch it and
 disabled it auto-launching when I open a markdown file.</p>
